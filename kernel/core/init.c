@@ -1,5 +1,5 @@
 /*
- * DionOS Main System Initialization Sequence
+ * Dionnex Main System Initialization Sequence
  */
 
 #include <kernel/core/kernel.h>
@@ -29,5 +29,5 @@ asmlinkage void __init start_kernel(void)
 	/* Phase 5: System Call Entry Point Wiring */
 	syscall_init();
 
-	pr_info("DionOS Kernel Subsystems Initialized Successfully. Spawning init process.\n");
+	pr_info("Dionnex Kernel Subsystems Initialized Successfully. Spawning init process.\n");
 }

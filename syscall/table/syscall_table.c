@@ -1,5 +1,5 @@
 /*
- * DionOS Master System Call Vector Table
+ * Dionnex Master System Call Vector Table
  */
 
 #include <ABI/kernel/internal/kabi.h>

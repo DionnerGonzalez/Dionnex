@@ -1,9 +1,9 @@
 /*
- * DionOS Core Kernel Header Definitions
+ * Dionnex Core Kernel Header Definitions
  */
 
-#ifndef _DIONOS_KERNEL_CORE_H
-#define _DIONOS_KERNEL_CORE_H
+#ifndef _DIONNEX_KERNEL_CORE_H
+#define _DIONNEX_KERNEL_CORE_H
 
 #include <ABI/kernel/internal/kabi.h>
 
@@ -15,4 +15,4 @@ void pr_debug(const char *fmt, ...);
 void panic(const char *fmt, ...) __attribute__((noreturn));
 void start_kernel(void);
 
-#endif /* _DIONOS_KERNEL_CORE_H */
+#endif /* _DIONNEX_KERNEL_CORE_H */

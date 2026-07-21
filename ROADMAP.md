@@ -1,4 +1,4 @@
-# DionOS Development Roadmap
+# Dionnex Development Roadmap
 
 ## Phase 1: Core Modular Infrastructure (Completed)
 - [x] Modern C kernel initialization and core logging.

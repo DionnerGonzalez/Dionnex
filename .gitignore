@@ -1,3 +1,4 @@
+# Build and package output
 node_modules/
 build/
 dist/
@@ -6,3 +7,16 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# AI Studio Web Harness & Container runtime files (Excluded from Git/GitHub)
+index.html
+metadata.json
+package.json
+package-lock.json
+bun.lock
+bun.lockb
+tsconfig.json
+tsconfig.node.json
+vite.config.ts
+src/
+.config

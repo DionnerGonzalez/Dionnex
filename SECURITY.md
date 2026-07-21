@@ -1,7 +1,7 @@
-# DionOS Kernel Security Policy
+# Dionnex Kernel Security Policy
 
 ## Reporting Security Issues
-If you discover a potential security vulnerability in DionOS kernel core or architectural modules, please email the security team at `security@dionos.org`.
+If you discover a potential security vulnerability in Dionnex kernel core or architectural modules, please email the security team at `security@dionnex.org`.
 
 Do NOT open public GitHub issues for unpatched vulnerabilities.
 

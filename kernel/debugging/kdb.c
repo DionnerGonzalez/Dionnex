@@ -1,5 +1,5 @@
 /*
- * DionOS In-Kernel Debugger (KDB)
+ * Dionnex In-Kernel Debugger (KDB)
  */
 
 #include <ABI/kernel/internal/kabi.h>
