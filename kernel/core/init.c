@@ -9,6 +9,7 @@ extern void vmm_init(void);
 extern void sched_init(void);
 extern void syscall_init(void);
 extern void irq_init(void);
+extern int drivers_subsystem_init(void);
 
 asmlinkage void __init start_kernel(void)
 {
@@ -23,10 +24,13 @@ asmlinkage void __init start_kernel(void)
 	/* Phase 3: Interrupt Vectors & APIC Initialization */
 	irq_init();
 
-	/* Phase 4: Scheduler & Initial Task0 Creation */
+	/* Phase 4: Modular Hardware Drivers Initialization */
+	drivers_subsystem_init();
+
+	/* Phase 5: Scheduler & Initial Task0 Creation */
 	sched_init();
 
-	/* Phase 5: System Call Entry Point Wiring */
+	/* Phase 6: System Call Entry Point Wiring */
 	syscall_init();
 
 	pr_info("Dionnex Kernel Subsystems Initialized Successfully. Spawning init process.\n");
