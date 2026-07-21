@@ -223,8 +223,116 @@ USERSPACE_OBJS := userspace_interface/libc/dion_libc.o \
                   userspace_interface/system_services/sys_services.o \
                   userspace_interface/utilities/sys_utils.o
 
+BUILD_SYS_OBJS := build_system/compiler/gcc/gcc_tool.o \
+                  build_system/compiler/clang/clang_tool.o \
+                  build_system/compiler/cross_compiler/cross_comp.o \
+                  build_system/linker/ld/ld_tool.o \
+                  build_system/linker/elf/elf_tool.o \
+                  build_system/linker/binary_tools/bin_tools.o \
+                  build_system/configuration/Kconfig/kconfig_core.o \
+                  build_system/configuration/menu_config/menuconfig.o \
+                  build_system/configuration/hardware_profiles/hw_profiles.o \
+                  build_system/build/kernel_build/kbuild.o \
+                  build_system/build/module_build/mbuild.o \
+                  build_system/build/driver_build/dbuild.o \
+                  build_system/build/package_build/pbuild.o \
+                  build_system/release/versioning/versioning.o \
+                  build_system/release/signing/rel_signing.o \
+                  build_system/release/packaging/rel_packaging.o
+
+TOOLS_OBJS     := tools/debugger/kernel_debugger/kgdb.o \
+                  tools/debugger/remote_debug/remote_dbg.o \
+                  tools/debugger/crash_analysis/crash_dump.o \
+                  tools/profiler/cpu_profiler/cpu_prof.o \
+                  tools/profiler/memory_profiler/mem_prof.o \
+                  tools/profiler/io_profiler/io_prof.o \
+                  tools/profiler/power_profiler/pwr_prof.o \
+                  tools/emulator/qemu/qemu_emu.o \
+                  tools/emulator/hardware_simulation/hw_sim.o \
+                  tools/emulator/architecture_testing/arch_test.o \
+                  tools/image_builder/iso_creator/iso_create.o \
+                  tools/image_builder/disk_image/disk_img.o \
+                  tools/image_builder/mobile_image/mobile_img.o \
+                  tools/image_builder/server_image/server_img.o \
+                  tools/firmware_tools/fw_tools.o \
+                  tools/driver_tools/drv_tools.o \
+                  tools/documentation_generator/doc_gen.o
+
+TESTING_OBJS   := testing/boot_tests/bios/bios_test.o \
+                  testing/boot_tests/uefi/uefi_test.o \
+                  testing/boot_tests/embedded/embed_test.o \
+                  testing/hardware_tests/cpu/cpu_test.o \
+                  testing/hardware_tests/gpu/gpu_test.o \
+                  testing/hardware_tests/storage/storage_test.o \
+                  testing/hardware_tests/network/net_test.o \
+                  testing/hardware_tests/mobile/mobile_test.o \
+                  testing/kernel_tests/scheduler/sched_test.o \
+                  testing/kernel_tests/memory/mem_test.o \
+                  testing/kernel_tests/filesystem/fs_test.o \
+                  testing/kernel_tests/drivers/driver_test.o \
+                  testing/kernel_tests/security/sec_test.o \
+                  testing/performance/benchmarks/benchmarks.o \
+                  testing/performance/latency/latency_test.o \
+                  testing/performance/throughput/throughput_test.o \
+                  testing/performance/power_efficiency/pwr_eff_test.o \
+                  testing/stress/cpu_stress/cpu_stress.o \
+                  testing/stress/memory_stress/mem_stress.o \
+                  testing/stress/io_stress/io_stress.o \
+                  testing/stress/network_stress/net_stress.o \
+                  testing/compatibility/old_hardware/old_hw_test.o \
+                  testing/compatibility/new_hardware/new_hw_test.o \
+                  testing/compatibility/applications/app_compat_test.o \
+                  testing/compatibility/architectures/arch_compat_test.o
+
+MODULES_OBJS   := modules/module_loader/mod_loader.o \
+                  modules/module_manager/mod_mgr.o \
+                  modules/dependency_manager/mod_dep.o \
+                  modules/module_signing/mod_sign.o \
+                  modules/hot_loading/mod_hot.o \
+                  modules/module_repository/mod_repo.o
+
+PKG_OBJS       := package_system/kernel_packages/kpkg.o \
+                  package_system/driver_packages/dpkg.o \
+                  package_system/firmware_packages/fwpkg.o \
+                  package_system/update_system/pkg_update.o \
+                  package_system/rollback/pkg_rollback.o
+
+MON_OBJS       := monitoring/system_monitor/sys_mon.o \
+                  monitoring/hardware_monitor/hw_mon.o \
+                  monitoring/logs/kernel_logs.o \
+                  monitoring/metrics/metrics.o \
+                  monitoring/diagnostics/diagnostics.o
+
+DIST_OBJS      := distribution/Dionnex/desktop/dist_desktop.o \
+                  distribution/Dionnex/server/dist_server.o \
+                  distribution/Dionnex/mobile/dist_mobile.o \
+                  distribution/Dionnex/embedded/dist_embedded.o \
+                  distribution/installers/dist_installer.o \
+                  distribution/recovery/dist_recovery.o \
+                  distribution/update_channels/dist_channels.o
+
+DEV_ENV_OBJS   := developer_environment/sdk/dev_sdk.o \
+                  developer_environment/headers/dev_headers.o \
+                  developer_environment/examples/dev_examples.o \
+                  developer_environment/driver_template/drv_template.o \
+                  developer_environment/module_template/mod_template.o
+
+GOV_OBJS       := governance/maintainers/gov_maintainers.o \
+                  governance/review_process/gov_review.o \
+                  governance/security_response/gov_security.o \
+                  governance/release_management/gov_release.o \
+                  governance/roadmap/gov_roadmap.o
+
+RELEASES_OBJS  := releases/Dionnex-0.1/rel_0_1.o \
+                  releases/Dionnex-0.5/rel_0_5.o \
+                  releases/Dionnex-1.0/rel_1_0.o \
+                  releases/Dionnex-LTS/rel_lts.o \
+                  releases/Dionnex-Enterprise/rel_enterprise.o
+
 OBJS := $(CORE_OBJS) $(PROC_OBJS) $(MM_OBJS) $(SYS_OBJS) $(BOOT_OBJS) $(ARCH_OBJS) $(DRIVER_OBJS) \
-        $(FS_OBJS) $(NET_OBJS) $(SEC_OBJS) $(VIRT_OBJS) $(PM_OBJS) $(COMPAT_OBJS) $(USERSPACE_OBJS)
+        $(FS_OBJS) $(NET_OBJS) $(SEC_OBJS) $(VIRT_OBJS) $(PM_OBJS) $(COMPAT_OBJS) $(USERSPACE_OBJS) \
+        $(BUILD_SYS_OBJS) $(TOOLS_OBJS) $(TESTING_OBJS) $(MODULES_OBJS) $(PKG_OBJS) $(MON_OBJS) \
+        $(DIST_OBJS) $(DEV_ENV_OBJS) $(GOV_OBJS) $(RELEASES_OBJS)
 
 all: dionnex.bin
 
