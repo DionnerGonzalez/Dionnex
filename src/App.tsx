@@ -42,9 +42,9 @@ const KERNEL_FILES: FileNode[] = [
     type: 'file',
     path: '/README.md',
     lang: 'markdown',
-    content: `# DionOS Kernel - Modern Modular Monolithic Operating System Kernel
+    content: `# Dionnex Kernel - Modern Modular Monolithic Operating System Kernel
 
-DionOS is a modern, enterprise-grade modular monolithic kernel designed in compliance with ISO C11 and Linux Kernel Coding Standards. It provides unified support across multiple architectures (x86, x86_64, ARM, ARM64, RISC-V, PowerPC, MIPS, SPARC, s390, LoongArch) with hardware-accelerated memory virtualization, pre-emptive fair scheduling, zero-copy IPC, and dynamic kernel module loading.
+Dionnex is a modern, enterprise-grade modular monolithic kernel designed strictly in compliance with ISO C11 and Linux Kernel Coding Standards. It provides unified support across multiple hardware architectures (x86, x86_64, ARM, ARM64, RISC-V, PowerPC, MIPS, SPARC, s390, LoongArch) with hardware-accelerated memory virtualization, pre-emptive fair scheduling, zero-copy IPC, and dynamic kernel module loading.
 
 ## Key Subsystems
 - **Core Kernel**: init.c, panic.c, logging.c, errors.c
@@ -61,7 +61,7 @@ DionOS is a modern, enterprise-grade modular monolithic kernel designed in compl
 PATCHLEVEL = 0
 SUBLEVEL = 0
 EXTRAVERSION = -RELEASE
-NAME = DionOS Modular Monolithic Kernel
+NAME = Dionnex Modular Monolithic Kernel
 
 ARCH ?= x86_64
 CC = gcc
@@ -75,16 +75,16 @@ PROC_OBJS := process/scheduler/fair/cfs.o process/processes/process.o \\
 
 MM_OBJS   := memory/physical/pmm.o memory/virtual/vmm.o memory/slab/slab.o
 
-all: dionos.bin`
+all: dionnex.bin`
   },
   {
     name: 'Kconfig',
     type: 'file',
     path: '/Kconfig',
     lang: 'kconfig',
-    content: `mainmenu "DionOS Modular Monolithic Kernel v1.0.0 Configuration"
+    content: `mainmenu "Dionnex Modular Monolithic Kernel v1.0.0 Configuration"
 
-config DIONOS_VERSION
+config DIONNEX_VERSION
 	string
 	default "1.0.0-RELEASE"
 
@@ -115,7 +115,7 @@ config SCHED_CFS
     type: 'file',
     path: '/.config',
     lang: 'ini',
-    content: `CONFIG_DIONOS_VERSION="1.0.0-RELEASE"
+    content: `CONFIG_DIONNEX_VERSION="1.0.0-RELEASE"
 CONFIG_ARCH_X86_64=y
 CONFIG_PREEMPT=y
 CONFIG_SCHED_CFS=y
@@ -352,12 +352,12 @@ static inline u64 sbi_call(u64 extension, u64 function, u64 arg0, u64 arg1)
             path: '/kernel/core/kernel.c',
             lang: 'c',
             content: `/*
- * DionOS Core Kernel Execution Entry & Symbol Table Manager
+ * Dionnex Core Kernel Execution Entry & Symbol Table Manager
  */
 
 #include <kernel/core/kernel.h>
 
-static const char *kernel_banner = "DionOS Modular Monolithic Kernel v1.0.0-RELEASE (c) 2026";
+static const char *kernel_banner = "Dionnex Modular Monolithic Kernel v1.0.0-RELEASE (c) 2026";
 
 const char *get_kernel_banner(void)
 {
@@ -372,7 +372,7 @@ EXPORT_SYMBOL(get_kernel_banner);`
             path: '/kernel/core/init.c',
             lang: 'c',
             content: `/*
- * DionOS Main System Initialization Sequence
+ * Dionnex Main System Initialization Sequence
  */
 
 #include <kernel/core/kernel.h>
@@ -402,7 +402,7 @@ asmlinkage void __init start_kernel(void)
 	/* Phase 5: System Call Entry Point Wiring */
 	syscall_init();
 
-	pr_info("DionOS Kernel Subsystems Initialized Successfully.\\n");
+	pr_info("Dionnex Kernel Subsystems Initialized Successfully.\\n");
 }`
           },
           {
@@ -411,7 +411,7 @@ asmlinkage void __init start_kernel(void)
             path: '/kernel/core/panic.c',
             lang: 'c',
             content: `/*
- * DionOS Kernel Panic Handler & Registers Dump
+ * Dionnex Kernel Panic Handler & Registers Dump
  */
 
 #include <kernel/core/kernel.h>
@@ -435,7 +435,7 @@ EXPORT_SYMBOL(panic);`
             type: 'file',
             path: '/kernel/core/logging.c',
             lang: 'c',
-            content: `/* DionOS Circular Ring Buffer Kernel Logger */
+            content: `/* Dionnex Circular Ring Buffer Kernel Logger */
 #include <kernel/core/kernel.h>
 
 #define LOG_BUF_SIZE 65536
@@ -450,7 +450,7 @@ EXPORT_SYMBOL(pr_info);`
             type: 'file',
             path: '/kernel/core/errors.c',
             lang: 'c',
-            content: `/* DionOS System Error Codes Map */
+            content: `/* Dionnex System Error Codes Map */
 #define EPERM 1
 #define ENOENT 2
 #define ENOMEM 12
@@ -463,7 +463,7 @@ const char *kernel_strerror(int err) {
 	default: return "Unknown error";
 	}
 }`
-          }
+          },
         ]
       }
     ]
@@ -751,7 +751,7 @@ export default function App() {
           </div>
           <div>
             <h1 className="text-sm font-bold tracking-tight text-white flex items-center gap-2">
-              DionOS <span className="text-xs px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded-full border border-emerald-500/30 font-mono">v1.0.0-RELEASE</span>
+              Dionnex <span className="text-xs px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded-full border border-emerald-500/30 font-mono">v1.0.0-RELEASE</span>
             </h1>
             <p className="text-[11px] text-slate-400 font-mono">Pure C Modern Modular Monolithic Kernel</p>
           </div>
@@ -912,7 +912,7 @@ export default function App() {
                 Multi-Architecture Abstraction Layer
               </h2>
               <p className="text-xs text-slate-400">
-                DionOS supports native execution across x86, x86_64, ARM, ARM64, RISC-V, PowerPC, MIPS, SPARC, s390, and LoongArch.
+                Dionnex supports native execution across x86, x86_64, ARM, ARM64, RISC-V, PowerPC, MIPS, SPARC, s390, and LoongArch.
               </p>
             </div>
 
@@ -997,7 +997,7 @@ export default function App() {
               Interactive Kernel Kconfig Engine (.config)
             </h2>
             <p className="text-xs text-slate-400 mt-1">
-              Toggle modular subsystem flags to customize the DionOS build image parameters.
+              Toggle modular subsystem flags to customize the Dionnex build image parameters.
             </p>
           </div>
 
@@ -1109,15 +1109,15 @@ export default function App() {
           </div>
 
           <div className="flex-1 bg-slate-900/90 border border-slate-800 rounded-xl p-4 font-mono text-xs text-slate-200 overflow-y-auto leading-relaxed scrollbar-thin scrollbar-thumb-slate-800">
-            <div className="text-slate-400">[    0.000000] Linux / DionOS version 1.0.0-RELEASE (gcc version 13.2.0) #1 SMP PREEMPT</div>
+            <div className="text-slate-400">[    0.000000] Linux / Dionnex version 1.0.0-RELEASE (gcc version 13.2.0) #1 SMP PREEMPT</div>
             <div className="text-slate-400">[    0.000010] Command line: console=ttyS0 root=/dev/sda1 quiet</div>
-            <div className="text-emerald-400">[    0.000120] [dionos] Booting DionOS Modular Monolithic Kernel v1.0.0-RELEASE...</div>
+            <div className="text-emerald-400">[    0.000120] [dionnex] Booting Dionnex Modular Monolithic Kernel v1.0.0-RELEASE...</div>
             <div className="text-slate-300">[    0.001400] [pmm] Initializing Buddy Physical Memory Allocator (16384MB RAM detected)</div>
             <div className="text-slate-300">[    0.003100] [vmm] Setting up 64-bit PML4 Page Tables & SLUB Memory Allocator</div>
             <div className="text-slate-300">[    0.005800] [idt] IDT Gates 0-255 initialized. Local APIC enabled at 0xFEE00000</div>
             <div className="text-slate-300">[    0.008900] [sched] Completely Fair Scheduler (CFS) vruntime queue active</div>
             <div className="text-slate-300">[    0.012400] [syscall] LSTAR MSR configured for fast x86_64 sys_dispatch table</div>
-            <div className="text-emerald-400">[    0.015000] [dionos] Kernel Subsystems Initialized Successfully. Spawning init process (PID 1).</div>
+            <div className="text-emerald-400">[    0.015000] [dionnex] Kernel Subsystems Initialized Successfully. Spawning init process (PID 1).</div>
           </div>
         </div>
       )}

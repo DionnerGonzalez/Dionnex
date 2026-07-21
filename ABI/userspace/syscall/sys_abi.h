@@ -1,9 +1,9 @@
 /*
- * DionOS System Call ABI Definitions
+ * Dionnex System Call ABI Definitions
  */
 
-#ifndef _DIONOS_SYS_ABI_H
-#define _DIONOS_SYS_ABI_H
+#ifndef _DIONNEX_SYS_ABI_H
+#define _DIONNEX_SYS_ABI_H
 
 #include <ABI/kernel/internal/kabi.h>
 

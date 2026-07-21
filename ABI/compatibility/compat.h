@@ -1,9 +1,9 @@
 /*
- * DionOS Backward Compatibility ABI
+ * Dionnex Backward Compatibility ABI
  */
 
-#ifndef _DIONOS_COMPAT_H
-#define _DIONOS_COMPAT_H
+#ifndef _DIONNEX_COMPAT_H
+#define _DIONNEX_COMPAT_H
 
 #include <ABI/kernel/internal/kabi.h>
 

@@ -2,7 +2,7 @@
 # DionOS Main Kernel Configuration Menu
 #
 
-mainmenu "DionOS Modular Monolithic Kernel v1.0.0 Configuration"
+mainmenu "Dionnex Modular Monolithic Kernel v1.0.0 Configuration"
 
 config DIONOS_VERSION
 	string

@@ -1,9 +1,9 @@
 /*
- * DionOS Device Driver Framework ABI
+ * Dionnex Device Driver Framework ABI
  */
 
-#ifndef _DIONOS_DRIVER_ABI_H
-#define _DIONOS_DRIVER_ABI_H
+#ifndef _DIONNEX_DRIVER_ABI_H
+#define _DIONNEX_DRIVER_ABI_H
 
 #include <ABI/kernel/internal/kabi.h>
 

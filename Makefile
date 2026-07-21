@@ -6,7 +6,7 @@ VERSION = 1
 PATCHLEVEL = 0
 SUBLEVEL = 0
 EXTRAVERSION = -RELEASE
-NAME = DionOS Modular Monolithic Kernel
+NAME = Dionnex Modular Monolithic Kernel
 
 # Architecture selection
 ARCH ?= x86_64
@@ -47,11 +47,11 @@ BOOT_OBJS := boot/early_init/early_setup.c boot/hardware_detection/hw_detect.o
 
 OBJS := $(CORE_OBJS) $(PROC_OBJS) $(MM_OBJS) $(SYS_OBJS) $(BOOT_OBJS)
 
-all: dionos.bin
+all: dionnex.bin
 
-dionos.bin: $(OBJS)
+dionnex.bin: $(OBJS)
 	@echo "  LD      $@"
-	@echo "Build completed successfully for ARCH=$(ARCH)"
+	@echo "Build completed successfully for Dionnex ARCH=$(ARCH)"
 
 %.o: %.c
 	@echo "  CC      $<"
@@ -60,6 +60,6 @@ defconfig:
 	@echo "Configured for ARCH=$(ARCH) - default profile loaded."
 
 clean:
-	@rm -f dionos.bin $(OBJS)
+	@rm -f dionnex.bin $(OBJS)
 
 .PHONY: all clean defconfig

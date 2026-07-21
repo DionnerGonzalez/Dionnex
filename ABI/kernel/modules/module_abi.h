@@ -1,9 +1,9 @@
 /*
- * DionOS Module ABI Header
+ * Dionnex Module ABI Header
  */
 
-#ifndef _DIONOS_MODULE_ABI_H
-#define _DIONOS_MODULE_ABI_H
+#ifndef _DIONNEX_MODULE_ABI_H
+#define _DIONNEX_MODULE_ABI_H
 
 #include <ABI/kernel/internal/kabi.h>
 

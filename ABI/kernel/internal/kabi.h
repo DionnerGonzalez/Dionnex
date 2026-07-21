@@ -1,10 +1,10 @@
 /*
- * DionOS Kernel Internal ABI Definition
+ * Dionnex Kernel Internal ABI Definition
  * Standard C11 Kernel Types and Export Definitions
  */
 
-#ifndef _DIONOS_KABI_H
-#define _DIONOS_KABI_H
+#ifndef _DIONNEX_KABI_H
+#define _DIONNEX_KABI_H
 
 #include <stddef.h>
 #include <stdint.h>
