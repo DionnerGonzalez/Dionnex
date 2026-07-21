@@ -329,10 +329,104 @@ RELEASES_OBJS  := releases/Dionnex-0.1/rel_0_1.o \
                   releases/Dionnex-LTS/rel_lts.o \
                   releases/Dionnex-Enterprise/rel_enterprise.o
 
+CORE_IMPROV_OBJS := core_improvements/kernel_object_manager/kobj_mgr.o \
+                    core_improvements/resource_manager/res_mgr.o \
+                    core_improvements/event_system/event_sys.o \
+                    core_improvements/error_handling/err_handle.o \
+                    core_improvements/logging_framework/log_frame.o \
+                    core_improvements/tracing_system/tracing_sys.o \
+                    core_improvements/performance_monitoring/perf_mon.o
+
+KERNEL_API_OBJS  := kernel_api/internal_api/internal_api.o \
+                    kernel_api/driver_api/driver_api.o \
+                    kernel_api/module_api/module_api.o \
+                    kernel_api/filesystem_api/fs_api.o \
+                    kernel_api/network_api/net_api.o \
+                    kernel_api/userspace_api/user_api.o
+
+SCHED_ADV_OBJS   := scheduler_advanced/multi_core_scheduler/mc_sched.o \
+                    scheduler_advanced/cpu_affinity/cpu_affinity.o \
+                    scheduler_advanced/load_balancing/load_bal.o \
+                    scheduler_advanced/real_time_scheduler/rt_sched.o \
+                    scheduler_advanced/power_aware_scheduler/pwr_sched.o \
+                    scheduler_advanced/task_priority_system/task_prio.o
+
+MEM_ADV_OBJS     := memory_advanced/memory_compression/mem_comp.o \
+                    memory_advanced/swap_system/swap_sys.o \
+                    memory_advanced/memory_hotplug/mem_hotplug.o \
+                    memory_advanced/numa_support/numa.o \
+                    memory_advanced/huge_pages/huge_pages.o \
+                    memory_advanced/memory_deduplication/mem_dedup.o \
+                    memory_advanced/leak_detection/leak_detect.o
+
+SEC_ADV_OBJS     := security_advanced/secure_boot/sec_boot_adv.o \
+                    security_advanced/kernel_module_signing/mod_sign_adv.o \
+                    security_advanced/access_control/access_ctrl_adv.o \
+                    security_advanced/sandboxing/sandbox_adv.o \
+                    security_advanced/exploit_mitigation/exploit_mit.o \
+                    security_advanced/vulnerability_scanner/vuln_scanner.o \
+                    security_advanced/security_audit/sec_audit_adv.o
+
+DRV_FRAME_OBJS   := driver_framework/automatic_detection/auto_detect.o \
+                    driver_framework/driver_registry/drv_reg.o \
+                    driver_framework/driver_dependencies/drv_deps.o \
+                    driver_framework/driver_testing/drv_test.o \
+                    driver_framework/hot_reload/drv_hot_reload.o \
+                    driver_framework/hardware_database/hw_db.o
+
+HAL_OBJS         := hardware_abstraction/HAL/hal_core.o \
+                    hardware_abstraction/device_tree/dev_tree.o \
+                    hardware_abstraction/ACPI_manager/acpi_mgr.o \
+                    hardware_abstraction/firmware_loader/fw_loader.o \
+                    hardware_abstraction/hardware_profiles/hw_profiles_adv.o
+
+COMPAT_ADV_OBJS  := compatibility/POSIX_layer/posix_layer.o \
+                    compatibility/Linux_API_layer/linux_api_layer.o \
+                    compatibility/legacy_support/legacy_supp.o \
+                    compatibility/application_runtime/app_runtime.o
+
+RELIAB_OBJS      := reliability/crash_recovery/crash_rec.o \
+                    reliability/watchdog/watchdog.o \
+                    reliability/fault_isolation/fault_iso.o \
+                    reliability/kernel_self_tests/self_tests.o \
+                    reliability/recovery_mode/rec_mode.o
+
+PERF_ADV_OBJS    := performance/benchmarking/benchmarking.o \
+                    performance/profiler/profiler_core.o \
+                    performance/cache_optimization/cache_opt.o \
+                    performance/io_optimization/io_opt.o \
+                    performance/latency_analysis/latency_anal.o
+
+DEV_TOOLS_OBJS   := developer_tools/kernel_debugger/kdebugger.o \
+                    developer_tools/crash_dump/crash_dump_tool.o \
+                    developer_tools/static_analyzer/static_analyzer.o \
+                    developer_tools/documentation_generator/doc_generator.o \
+                    developer_tools/kernel_sdk/ksdk.o
+
+TEST_INFRA_OBJS  := testing_infrastructure/continuous_integration/ci_engine.o \
+                    testing_infrastructure/hardware_testing/hw_testing.o \
+                    testing_infrastructure/fuzzing/fuzzer.o \
+                    testing_infrastructure/stress_testing/stress_engine.o \
+                    testing_infrastructure/regression_testing/regression_tests.o
+
+ENT_FEAT_OBJS    := enterprise_features/clustering/clustering.o \
+                    enterprise_features/high_availability/high_avail.o \
+                    enterprise_features/server_optimization/server_opt.o \
+                    enterprise_features/virtualization/virt_ent.o \
+                    enterprise_features/cloud_support/cloud_supp.o
+
+FUTURE_OBJS      := future/ai_assisted_optimization/ai_opt.o \
+                    future/quantum_ready/quantum_ready.o \
+                    future/new_architectures/new_arch.o \
+                    future/experimental_features/exp_features.o
+
 OBJS := $(CORE_OBJS) $(PROC_OBJS) $(MM_OBJS) $(SYS_OBJS) $(BOOT_OBJS) $(ARCH_OBJS) $(DRIVER_OBJS) \
         $(FS_OBJS) $(NET_OBJS) $(SEC_OBJS) $(VIRT_OBJS) $(PM_OBJS) $(COMPAT_OBJS) $(USERSPACE_OBJS) \
         $(BUILD_SYS_OBJS) $(TOOLS_OBJS) $(TESTING_OBJS) $(MODULES_OBJS) $(PKG_OBJS) $(MON_OBJS) \
-        $(DIST_OBJS) $(DEV_ENV_OBJS) $(GOV_OBJS) $(RELEASES_OBJS)
+        $(DIST_OBJS) $(DEV_ENV_OBJS) $(GOV_OBJS) $(RELEASES_OBJS) \
+        $(CORE_IMPROV_OBJS) $(KERNEL_API_OBJS) $(SCHED_ADV_OBJS) $(MEM_ADV_OBJS) $(SEC_ADV_OBJS) \
+        $(DRV_FRAME_OBJS) $(HAL_OBJS) $(COMPAT_ADV_OBJS) $(RELIAB_OBJS) $(PERF_ADV_OBJS) \
+        $(DEV_TOOLS_OBJS) $(TEST_INFRA_OBJS) $(ENT_FEAT_OBJS) $(FUTURE_OBJS)
 
 all: dionnex.bin
 
