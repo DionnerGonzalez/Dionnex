@@ -121,7 +121,110 @@ DRIVER_OBJS := drivers/drivers.o \
                drivers/firmware/wifi_firmware/fw_wifi.o drivers/firmware/bluetooth_firmware/fw_bluetooth.o \
                drivers/firmware/cpu_microcode/fw_cpu_ucode.o drivers/firmware/embedded_firmware/fw_embedded.o
 
-OBJS := $(CORE_OBJS) $(PROC_OBJS) $(MM_OBJS) $(SYS_OBJS) $(BOOT_OBJS) $(ARCH_OBJS) $(DRIVER_OBJS)
+FS_OBJS   := filesystem/VFS/namespace/vfs_ns.o filesystem/VFS/mount/vfs_mount.o \
+             filesystem/VFS/inode/vfs_inode.o filesystem/VFS/directory/vfs_dir.o \
+             filesystem/VFS/file_operations/vfs_file.o filesystem/VFS/permissions/vfs_perm.o \
+             filesystem/VFS/cache/vfs_cache.o \
+             filesystem/DionFS/core/dionfs_core.o filesystem/DionFS/journal/dionfs_journal.o \
+             filesystem/DionFS/compression/dionfs_compress.o filesystem/DionFS/encryption/dionfs_crypto.o \
+             filesystem/DionFS/snapshots/dionfs_snapshot.o \
+             filesystem/ext/ext2/ext2.o filesystem/ext/ext3/ext3.o filesystem/ext/ext4/ext4.o \
+             filesystem/fat/fat16/fat16.o filesystem/fat/fat32/fat32.o filesystem/fat/exfat/exfat.o \
+             filesystem/ntfs/ntfs.o filesystem/iso9660/iso9660.o filesystem/udf/udf.o \
+             filesystem/btrfs/btrfs.o filesystem/zfs_interface/zfs.o filesystem/squashfs/squashfs.o \
+             filesystem/tmpfs/tmpfs.o filesystem/ramfs/ramfs.o \
+             filesystem/network_filesystems/nfs/nfs.o filesystem/network_filesystems/smb/smb.o \
+             filesystem/network_filesystems/ftp_fs/ftp_fs.o \
+             filesystem/virtual_filesystems/proc/procfs.o filesystem/virtual_filesystems/sys/sysfs.o \
+             filesystem/virtual_filesystems/dev/devfs.o \
+             filesystem/storage_management/volume_manager/vol_mgr.o \
+             filesystem/storage_management/encryption_layer/storage_crypto.o \
+             filesystem/storage_management/snapshot_manager/snapshot_mgr.o
+
+NET_OBJS  := networking/network_core/socket_layer/socket.o \
+             networking/network_core/packet_manager/packet.o \
+             networking/network_core/routing/routing.o \
+             networking/network_core/network_namespace/net_ns.o \
+             networking/ethernet/net_ethernet.o networking/wifi/net_wifi.o \
+             networking/bluetooth/net_bluetooth.o \
+             networking/protocols/arp/arp.o networking/protocols/ipv4/ipv4.o \
+             networking/protocols/ipv6/ipv6.o networking/protocols/icmp/icmp.o \
+             networking/protocols/tcp/tcp.o networking/protocols/udp/udp.o \
+             networking/protocols/quic/quic.o networking/protocols/multicast/multicast.o \
+             networking/application_network/dns/dns.o networking/application_network/dhcp/dhcp.o \
+             networking/application_network/http/http.o networking/application_network/tls/tls.o \
+             networking/application_network/websocket/websocket.o \
+             networking/firewall/packet_filter/filter.o \
+             networking/firewall/state_tracking/conntrack.o \
+             networking/firewall/intrusion_detection/ids.o \
+             networking/vpn/tunnel/tunnel.o networking/vpn/encryption/vpn_crypto.o \
+             networking/vpn/virtual_network/vnet.o \
+             networking/acceleration/hardware_offload/hw_offload.o \
+             networking/acceleration/dma_network/net_dma.o \
+             networking/acceleration/packet_processing/packet_proc.o
+
+SEC_OBJS  := security/access_control/permissions/sec_perm.o \
+             security/access_control/capabilities/sec_caps.o \
+             security/access_control/policies/sec_policy.o \
+             security/authentication/users/auth_users.o \
+             security/authentication/passwords/auth_pass.o \
+             security/authentication/keys/auth_keys.o \
+             security/authentication/tokens/auth_tokens.o \
+             security/cryptography/hash/sha/sha.o \
+             security/cryptography/hash/blake/blake.o \
+             security/cryptography/encryption/aes/aes.o \
+             security/cryptography/encryption/chacha/chacha.o \
+             security/cryptography/encryption/rsa/rsa.o \
+             security/cryptography/random/rng.o \
+             security/secure_boot/sec_boot.o security/trusted_execution/tee.o \
+             security/kernel_integrity/integrity.o \
+             security/exploit_protection/stack_protection/stack_prot.o \
+             security/exploit_protection/memory_protection/mem_prot.o \
+             security/exploit_protection/address_randomization/aslr.o \
+             security/sandbox/applications/app_sandbox.o \
+             security/sandbox/drivers/driver_sandbox.o \
+             security/sandbox/containers/container_sandbox.o \
+             security/auditing/audit.o security/security_monitor/sec_mon.o
+
+VIRT_OBJS := virtualization/hypervisor/cpu_virtualization/cpu_virt.o \
+             virtualization/hypervisor/memory_virtualization/mem_virt.o \
+             virtualization/hypervisor/device_virtualization/dev_virt.o \
+             virtualization/hypervisor/migration/virt_mig.o \
+             virtualization/kvm_like/kvm.o \
+             virtualization/containers/isolation/isolation.o \
+             virtualization/containers/namespaces/virt_ns.o \
+             virtualization/containers/resource_limits/cgroups.o \
+             virtualization/virtual_devices/virtual_disk/vdisk.o \
+             virtualization/virtual_devices/virtual_network/vnet_dev.o \
+             virtualization/virtual_devices/virtual_gpu/vgpu.o \
+             virtualization/cloud/orchestration/orchestrator.o \
+             virtualization/cloud/scaling/autoscale.o \
+             virtualization/cloud/monitoring/virt_mon.o
+
+PM_OBJS   := power_management/acpi/acpi_pm.o power_management/uefi_power/uefi_pm.o \
+             power_management/cpu_frequency/intel_scaling/intel_pstate.o \
+             power_management/cpu_frequency/amd_scaling/amd_pstate.o \
+             power_management/cpu_frequency/arm_scaling/arm_cpufreq.o \
+             power_management/gpu_power/gpu_pm.o \
+             power_management/thermal/temperature/temp_mon.o \
+             power_management/thermal/fan_control/fan_ctrl.o \
+             power_management/thermal/emergency_shutdown/thermal_shutdown.o \
+             power_management/battery/batt_pm.o power_management/charging/charge_pm.o \
+             power_management/suspend/suspend.o power_management/hibernate/hibernate.o \
+             power_management/wakeup/wakeup.o
+
+COMPAT_OBJS := compatibility/POSIX/posix_compat.o compatibility/UNIX/unix_compat.o \
+               compatibility/Linux_Compatibility/linux_compat.o \
+               compatibility/Legacy/legacy_compat.o \
+               compatibility/Application_Interface/abi_compat.o
+
+USERSPACE_OBJS := userspace_interface/libc/dion_libc.o \
+                  userspace_interface/init_system/init_sys.o \
+                  userspace_interface/system_services/sys_services.o \
+                  userspace_interface/utilities/sys_utils.o
+
+OBJS := $(CORE_OBJS) $(PROC_OBJS) $(MM_OBJS) $(SYS_OBJS) $(BOOT_OBJS) $(ARCH_OBJS) $(DRIVER_OBJS) \
+        $(FS_OBJS) $(NET_OBJS) $(SEC_OBJS) $(VIRT_OBJS) $(PM_OBJS) $(COMPAT_OBJS) $(USERSPACE_OBJS)
 
 all: dionnex.bin
 
