@@ -1,0 +1,6 @@
+{
+  "name": "DionOS Modular Monolithic Kernel",
+  "description": "A modern modular monolithic kernel in pure C following Linux kernel standards with x86, x86_64, ARM, ARM64, RISC-V support.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
