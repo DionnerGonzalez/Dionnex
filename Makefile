@@ -1,55 +1,64 @@
 # ============================================================================
-# Dionnex Real OS Kernel - Production Build System Makefile
+# Dionnex Kernel - Production Build System Makefile
 # ============================================================================
 
 CC = gcc
 AS = nasm
 LD = ld
 
-CFLAGS = -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector \
-         -fno-pie -no-pie -Wall -Wextra -Iinclude -I. -O2 -g
+CFLAGS = -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector -fno-pie -Wall -Wextra -I. -Iinclude -Ikernel
 ASFLAGS = -f elf32
-LDFLAGS = -m elf_i386 -T linker.ld
+LDFLAGS = -m elf_i386 -T arch/x86_64/linker.ld
 
-C_SOURCES = $(shell find kernel memory process drivers fs loader shell -name "*.c" 2>/dev/null)
-ASM_SOURCES = boot.asm arch/x86/switch.asm
+C_SOURCES = \
+	kernel/init.c \
+	kernel/kprintf.c \
+	kernel/timer.c \
+	kernel/keyboard.c \
+	kernel/panic.c \
+	kernel/shell.c \
+	memory/pmm.c \
+	memory/vmm.c \
+	memory/kmalloc.c \
+	process/task.c \
+	process/cfs.c \
+	process/elf.c \
+	drivers/irq.c \
+	drivers/drivers.c \
+	syscall/syscall_table.c \
+	filesystem/vfs.c \
+	filesystem/initramfs.c \
+	arch/x86_64/gdt.c \
+	arch/x86_64/idt.c \
+	arch/x86_64/tss.c
 
-C_OBJECTS = $(C_SOURCES:.c=.o)
-ASM_OBJECTS = boot.o arch/x86/switch.o
+ASM_SOURCES = \
+	arch/x86_64/boot.asm \
+	arch/x86_64/gdt_flush.asm \
+	arch/x86_64/idt_flush.asm \
+	arch/x86_64/isr_stubs.asm \
+	arch/x86_64/switch.asm
 
-KERNEL_BIN = kernel.bin
-KERNEL_ISO = dionnex_kernel.iso
+C_OBJS = $(C_SOURCES:.c=.o)
+ASM_OBJS = $(ASM_SOURCES:.asm=.o)
+OBJS = $(ASM_OBJS) $(C_OBJS)
 
-.PHONY: all clean iso run
+all: dionnex_kernel.bin
 
-all: $(KERNEL_BIN)
-
-boot.o: boot.asm
-	$(AS) $(ASFLAGS) $< -o $@
-
-arch/x86/switch.o: arch/x86/switch.asm
-	@mkdir -p arch/x86
-	$(AS) $(ASFLAGS) $< -o $@
+dionnex_kernel.bin: $(OBJS)
+	@echo "[LD] Linking Dionnex Microkernel Binary image..."
+	$(LD) $(LDFLAGS) -o $@ $(OBJS)
+	@echo "[SUCCESS] Kernel built successfully: dionnex_kernel.bin"
 
 %.o: %.c
+	@echo "[CC] Compiling $<"
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(KERNEL_BIN): $(ASM_OBJECTS) $(C_OBJECTS)
-	$(LD) $(LDFLAGS) $(ASM_OBJECTS) $(C_OBJECTS) -o $(KERNEL_BIN)
-	@echo "SUCCESS: $(KERNEL_BIN) compiled and linked cleanly."
-
-iso: $(KERNEL_BIN)
-	@mkdir -p iso_root/boot/grub
-	@cp $(KERNEL_BIN) iso_root/boot/kernel.bin
-	@echo 'menuentry "Dionnex Real Kernel OS" {' > iso_root/boot/grub/grub.cfg
-	@echo '    multiboot /boot/kernel.bin' >> iso_root/boot/grub/grub.cfg
-	@echo '}' >> iso_root/boot/grub/grub.cfg
-	@grub-mkrescue -o $(KERNEL_ISO) iso_root/
-	@echo "SUCCESS: ISO created at $(KERNEL_ISO)"
-
-run: iso
-	qemu-system-i386 -cdrom $(KERNEL_ISO) -m 512M -serial stdio
+%.o: %.asm
+	@echo "[AS] Assembling $<"
+	$(AS) $(ASFLAGS) $< -o $@
 
 clean:
-	rm -f $(C_OBJECTS) $(ASM_OBJECTS) $(KERNEL_BIN) $(KERNEL_ISO)
-	rm -rf iso_root
+	rm -f $(OBJS) dionnex_kernel.bin dionnex_kernel.iso
+
+.PHONY: all clean

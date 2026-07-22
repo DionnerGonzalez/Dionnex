@@ -1,70 +1,69 @@
 /* ============================================================================
- * Dionnex Kernel - Virtual Memory Manager & Paging (memory/vmm.c)
+ * Dionnex Kernel - Virtual Memory Manager & Page Directory (memory/vmm.c)
  * ============================================================================
  */
-#include <kernel.h>
+#include <kernel/kernel.h>
 
-#define PDE_PRESENT  0x01
-#define PDE_RW       0x02
-#define PDE_USER     0x04
+#define PAGE_SIZE 4096
+#define PAGES_PER_TABLE 1024
+#define TABLES_PER_DIR 1024
 
-#define PTE_PRESENT  0x01
-#define PTE_RW       0x02
-#define PTE_USER     0x04
+typedef uint32_t pde_t;
+typedef uint32_t pte_t;
 
-static uint32_t page_directory[1024] __attribute__((aligned(4096)));
-static uint32_t first_page_table[1024] __attribute__((aligned(4096)));
+static pde_t kernel_page_directory[TABLES_PER_DIR] __attribute__((aligned(4096)));
+static pte_t first_page_table[PAGES_PER_TABLE] __attribute__((aligned(4096)));
 
 void vmm_init(void) {
-    // Identity map the first 4 MB (0x00000000 - 0x003FFFFF)
-    for (uint32_t i = 0; i < 1024; i++) {
-        first_page_table[i] = (i * 0x1000) | PTE_PRESENT | PTE_RW;
+    memset(kernel_page_directory, 0, sizeof(kernel_page_directory));
+
+    // Identity map the first 4MB of RAM using first_page_table
+    for (uint32_t i = 0; i < PAGES_PER_TABLE; i++) {
+        first_page_table[i] = (i * PAGE_SIZE) | 0x3; // Supervisor, Read/Write, Present
     }
 
-    // Set Page Directory entry 0
-    page_directory[0] = ((uint32_t)first_page_table) | PDE_PRESENT | PDE_RW;
+    // Put first page table into page directory entry 0
+    kernel_page_directory[0] = ((uint32_t)first_page_table) | 0x3;
 
-    // Fill remaining page directory entries as not present
-    for (uint32_t i = 1; i < 1024; i++) {
-        page_directory[i] = 0 | PDE_RW;
-    }
+    // Load CR3 with page directory physical address
+    uint32_t pd_addr = (uint32_t)kernel_page_directory;
+    __asm__ __volatile__ ("mov %0, %%cr3" : : "r"(pd_addr));
 
-    // Load CR3 with Page Directory physical address
-    __asm__ __volatile__("mov %0, %%cr3" : : "r"(page_directory));
-
-    // Enable Paging bit (PG = bit 31) in CR0
+    // Enable paging in CR0 (Bit 31 PG = 1)
     uint32_t cr0;
-    __asm__ __volatile__("mov %%cr0, %0" : "=r"(cr0));
+    __asm__ __volatile__ ("mov %%cr0, %0" : "=r"(cr0));
     cr0 |= 0x80000000;
-    __asm__ __volatile__("mov %0, %%cr0" : : "r"(cr0));
-
-    vga_puts("[VMM] Paginacion virtual activada (CR0 bit PG=1, Identity map 0-4MB).\n");
+    __asm__ __volatile__ ("mov %0, %%cr0" : : "r"(cr0));
 }
 
 int vmm_map_page(uint32_t vaddr, uint32_t paddr, uint32_t flags) {
-    uint32_t pd_index = vaddr >> 22;
-    uint32_t pt_index = (vaddr >> 12) & 0x03FF;
+    uint32_t pd_idx = vaddr >> 22;
+    uint32_t pt_idx = (vaddr >> 12) & 0x3FF;
 
-    if (!(page_directory[pd_index] & PDE_PRESENT)) {
-        // Allocate page table if not present
-        page_directory[pd_index] = (paddr & 0xFFFFF000) | flags | PDE_PRESENT;
+    if (!(kernel_page_directory[pd_idx] & 0x1)) {
+        // Allocate a new page table
+        pte_t* new_pt = (pte_t*)pmm_alloc_page();
+        if (!new_pt) return -1;
+        memset(new_pt, 0, PAGE_SIZE);
+        kernel_page_directory[pd_idx] = ((uint32_t)new_pt) | 0x7; // User, RW, Present
     }
 
-    uint32_t* pt = (uint32_t*)(page_directory[pd_index] & 0xFFFFF000);
-    pt[pt_index] = (paddr & 0xFFFFF000) | flags | PTE_PRESENT;
+    pte_t* pt = (pte_t*)(kernel_page_directory[pd_idx] & ~0xFFF);
+    pt[pt_idx] = (paddr & ~0xFFF) | (flags & 0xFFF) | 0x1;
 
-    // Flush TLB
-    __asm__ __volatile__("invlpg (%0)" : : "r"(vaddr) : "memory");
+    // Invalidate TLB for virtual address
+    __asm__ __volatile__ ("invlpg (%0)" : : "r"(vaddr) : "memory");
+
     return 0;
 }
 
 void vmm_unmap_page(uint32_t vaddr) {
-    uint32_t pd_index = vaddr >> 22;
-    uint32_t pt_index = (vaddr >> 12) & 0x03FF;
+    uint32_t pd_idx = vaddr >> 22;
+    uint32_t pt_idx = (vaddr >> 12) & 0x3FF;
 
-    if (page_directory[pd_index] & PDE_PRESENT) {
-        uint32_t* pt = (uint32_t*)(page_directory[pd_index] & 0xFFFFF000);
-        pt[pt_index] = 0;
-        __asm__ __volatile__("invlpg (%0)" : : "r"(vaddr) : "memory");
+    if (kernel_page_directory[pd_idx] & 0x1) {
+        pte_t* pt = (pte_t*)(kernel_page_directory[pd_idx] & ~0xFFF);
+        pt[pt_idx] = 0;
+        __asm__ __volatile__ ("invlpg (%0)" : : "r"(vaddr) : "memory");
     }
 }
