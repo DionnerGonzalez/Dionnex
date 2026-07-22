@@ -104,6 +104,18 @@ const char* vfs_read_file(const char* name);
 
 void initramfs_init(void);
 
+/* Extended Subsystem Initializers */
+void hal_init(void);
+void power_management_init(void);
+void security_init(void);
+void driver_framework_init(void);
+void net_subsystem_init(void);
+void virtualization_subsystem_init(void);
+void perf_subsystem_init(void);
+void telemetry_init(void);
+void sys_interface_init(void);
+void numa_init(void);
+
 void shell_start(void);
 void process_shell_command(const char* cmd);
 

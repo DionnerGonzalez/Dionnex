@@ -30,7 +30,22 @@ C_SOURCES = \
 	filesystem/initramfs.c \
 	arch/x86_64/gdt.c \
 	arch/x86_64/idt.c \
-	arch/x86_64/tss.c
+	arch/x86_64/tss.c \
+	networking/net_core.c \
+	security/capability.c \
+	virtualization/kvm.c \
+	power_management/pm.c \
+	hardware_abstraction/hal.c \
+	driver_framework/device.c \
+	performance/perf.c \
+	monitoring/telemetry.c \
+	userspace_interface/sys_interface.c \
+	testing/ktest.c \
+	build_system/kbuild.c \
+	kernel_api/api.c \
+	memory_advanced/numa.c \
+	reliability/watchdog.c \
+	compatibility/posix.c
 
 ASM_SOURCES = \
 	arch/x86_64/boot.asm \

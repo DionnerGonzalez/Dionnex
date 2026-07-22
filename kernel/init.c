@@ -39,18 +39,42 @@ void start_kernel(void) {
     kmalloc_init();
 
     /* 3. Drivers & Hardware */
+    kprintf("[INIT] Hardware Abstraction Layer (HAL)...\n");
+    hal_init();
+
+    kprintf("[INIT] Power Management (ACPI/PM)...\n");
+    power_management_init();
+
+    kprintf("[INIT] Driver Framework & Device Tree...\n");
+    driver_framework_init();
+
     kprintf("[INIT] Registering System Interrupt Requests (IRQs)...\n");
     irq_init();
 
     kprintf("[INIT] Initializing PS/2 Keyboard Driver...\n");
     keyboard_init();
 
-    /* 4. Filesystem & RAM Disk */
+    /* 4. Filesystem, Networking & Security */
     kprintf("[INIT] Initializing Virtual File System (VFS)...\n");
     vfs_init();
 
     kprintf("[INIT] Mounting initramfs root filesystem...\n");
     initramfs_init();
+
+    kprintf("[INIT] Security Capabilities & Access Control...\n");
+    security_init();
+
+    kprintf("[INIT] Networking IPv4 Stack...\n");
+    net_subsystem_init();
+
+    kprintf("[INIT] Hypervisor Virtualization Engine (KVM)...\n");
+    virtualization_subsystem_init();
+
+    kprintf("[INIT] Performance Profiler & Telemetry Engine...\n");
+    perf_subsystem_init();
+    telemetry_init();
+    sys_interface_init();
+    numa_init();
 
     /* 5. Process Scheduler & Syscalls */
     kprintf("[INIT] Initializing Completely Fair Scheduler (CFS)...\n");

@@ -1,4 +1,4 @@
-# Dionnex Kernel Core API Documentation
+# DionOS Kernel Core API Documentation
 
 ## Logging Subsystem
 - `pr_info(fmt, ...)`: Print informational kernel logs.
