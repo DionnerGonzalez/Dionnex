@@ -1,6 +1,6 @@
-# DionOS Kernel - Modern Modular Monolithic Operating System Kernel
+# Dionnex Kernel - Modern Modular Monolithic Operating System Kernel
 
-DionOS is a modern, enterprise-grade modular monolithic kernel designed in compliance with ISO C11 and Linux Kernel Coding Standards. It provides unified support across multiple architectures (x86, x86_64, ARM, ARM64, RISC-V, PowerPC, MIPS, SPARC, s390, LoongArch) with hardware-accelerated memory virtualization, pre-emptive fair scheduling, zero-copy IPC, and dynamic kernel module loading.
+Dionnex is a modern, enterprise-grade modular monolithic kernel designed in compliance with ISO C11 and Linux Kernel Coding Standards. It provides unified support across multiple architectures (x86, x86_64, ARM, ARM64, RISC-V, PowerPC, MIPS, SPARC, s390, LoongArch) with hardware-accelerated memory virtualization, pre-emptive fair scheduling, zero-copy IPC, and dynamic kernel module loading.
 
 ## Key Features
 

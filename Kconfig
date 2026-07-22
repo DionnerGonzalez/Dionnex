@@ -1,10 +1,10 @@
 #
-# DionOS Main Kernel Configuration Menu
+# Dionnex Main Kernel Configuration Menu
 #
 
 mainmenu "Dionnex Modular Monolithic Kernel v1.0.0 Configuration"
 
-config DIONOS_VERSION
+config DIONNEX_VERSION
 	string
 	default "1.0.0-RELEASE"
 

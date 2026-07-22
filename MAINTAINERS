@@ -1,29 +1,29 @@
-DIONOS KERNEL MAINTAINERS FILE
+DIONNEX KERNEL MAINTAINERS FILE
 =============================
 
 ARCHITECTURE (x86_64)
-M:  x86 Lead <x86@dionos.org>
+M:  x86 Lead <x86@dionnex.org>
 S:  Supported
 F:  arch/x86/
 F:  arch/x86_64/
 
 ARCHITECTURE (ARM64)
-M:  ARM Lead <arm64@dionos.org>
+M:  ARM Lead <arm64@dionnex.org>
 S:  Supported
 F:  arch/arm64/
 
 CORE KERNEL
-M:  Kernel Core Team <core@dionos.org>
+M:  Kernel Core Team <core@dionnex.org>
 S:  Maintained
 F:  kernel/
 F:  process/
 
 MEMORY MANAGEMENT (MM)
-M:  Memory Maintainers <mm@dionos.org>
+M:  Memory Maintainers <mm@dionnex.org>
 S:  Maintained
 F:  memory/
 
 SYSTEM CALLS
-M:  Syscall Group <syscall@dionos.org>
+M:  Syscall Group <syscall@dionnex.org>
 S:  Maintained
 F:  syscall/

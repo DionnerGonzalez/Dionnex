@@ -2,8 +2,8 @@
  * ELF64 Binary Format Definitions
  */
 
-#ifndef _DIONOS_ELF_H
-#define _DIONOS_ELF_H
+#ifndef _DIONNEX_ELF_H
+#define _DIONNEX_ELF_H
 
 #include <ABI/kernel/internal/kabi.h>
 
@@ -30,4 +30,4 @@ typedef struct {
 #define EM_AARCH64 183
 #define EM_RISCV 243
 
-#endif /* _DIONOS_ELF_H */
+#endif /* _DIONNEX_ELF_H */

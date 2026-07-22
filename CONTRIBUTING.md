@@ -1,9 +1,9 @@
-# Contributing to DionOS Kernel
+# Contributing to Dionnex Kernel
 
-Thank you for your interest in contributing to DionOS!
+Thank you for your interest in contributing to Dionnex!
 
 ## Code Style Guidelines
-- DionOS follows the standard Linux Kernel Coding Style.
+- Dionnex follows the standard Linux Kernel Coding Style.
 - Use 8-character tabs for indentation.
 - Variable names should be short, concise, and in lowercase (`struct task_struct *task`).
 - Function definitions must specify `asmlinkage` or standard visibility modifiers.

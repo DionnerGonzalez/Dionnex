@@ -1,12 +1,12 @@
-DionOS Kernel Maintainers and Contributors
+Dionnex Kernel Maintainers and Contributors
 =========================================
 
 Core Architect:
-    Dion OS Core Architecture Group <core@dionos.org>
+    Dionnex Core Architecture Group <core@dionnex.org>
 
 Subsystem Maintainers:
-    Architecture (x86/x86_64):  Alex V. <x86@dionos.org>
-    Architecture (ARM/ARM64):   Elena R. <arm@dionos.org>
-    Memory Subsystem:           Marcus K. <mm@dionos.org>
-    Process Scheduler:          Dmitri P. <sched@dionos.org>
-    System Call Interface:      Sarah Chen <syscall@dionos.org>
+    Architecture (x86/x86_64):  Alex V. <x86@dionnex.org>
+    Architecture (ARM/ARM64):   Elena R. <arm@dionnex.org>
+    Memory Subsystem:           Marcus K. <mm@dionnex.org>
+    Process Scheduler:          Dmitri P. <sched@dionnex.org>
+    System Call Interface:      Sarah Chen <syscall@dionnex.org>
