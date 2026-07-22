@@ -4,11 +4,56 @@
  */
 #include <kernel.h>
 
+/* Standard C Memory & String Functions for Kernel Space */
+void* memset(void* dest, int val, size_t count) {
+    uint8_t* temp = (uint8_t*)dest;
+    for (; count != 0; count--) *temp++ = (uint8_t)val;
+    return dest;
+}
+
+void* memcpy(void* dest, const void* src, size_t count) {
+    const uint8_t* sp = (const uint8_t*)src;
+    uint8_t* dp = (uint8_t*)dest;
+    for (; count != 0; count--) *dp++ = *sp++;
+    return dest;
+}
+
+size_t strlen(const char* str) {
+    size_t len = 0;
+    while (str[len]) len++;
+    return len;
+}
+
+int strcmp(const char* s1, const char* s2) {
+    while (*s1 && (*s1 == *s2)) {
+        s1++;
+        s2++;
+    }
+    return *(const uint8_t*)s1 - *(const uint8_t*)s2;
+}
+
+int strncmp(const char* s1, const char* s2, size_t n) {
+    while (n && *s1 && (*s1 == *s2)) {
+        s1++;
+        s2++;
+        n--;
+    }
+    if (n == 0) return 0;
+    return *(const uint8_t*)s1 - *(const uint8_t*)s2;
+}
+
+char* strcpy(char* dest, const char* src) {
+    char* orig = dest;
+    while ((*dest++ = *src++));
+    return orig;
+}
+
 /* VGA Text Mode Buffer */
 static uint16_t* vga_buffer = (uint16_t*)0xB8000;
 static uint8_t vga_color = 0x0F; // Light white on black
 static size_t vga_row = 0;
 static size_t vga_col = 0;
+
 
 void vga_clear(void) {
     for (size_t y = 0; y < 25; y++) {

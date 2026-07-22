@@ -11,26 +11,28 @@ static u32 log_head = 0;
 
 void pr_info(const char *fmt, ...)
 {
-	/* Append formatted string into kernel ring buffer and write to early serial output */
-	(void)fmt;
-	(void)log_buf;
-	(void)log_head;
+	vga_puts("[INFO] ");
+	vga_puts(fmt);
 }
 
 void pr_err(const char *fmt, ...)
 {
-	(void)fmt;
+	vga_puts("[ERR] ");
+	vga_puts(fmt);
 }
 
 void pr_warn(const char *fmt, ...)
 {
-	(void)fmt;
+	vga_puts("[WARN] ");
+	vga_puts(fmt);
 }
 
 void pr_debug(const char *fmt, ...)
 {
-	(void)fmt;
+	vga_puts("[DBG] ");
+	vga_puts(fmt);
 }
 
 EXPORT_SYMBOL(pr_info);
 EXPORT_SYMBOL(pr_err);
+
