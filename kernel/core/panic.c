@@ -1,5 +1,5 @@
 /*
- * Dionnex Kernel Panic Handler & Registers Dump
+ * DionOS Kernel Panic Handler & Registers Dump
  */
 
 #include <kernel/core/kernel.h>

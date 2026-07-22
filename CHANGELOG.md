@@ -1,4 +1,4 @@
-# Dionnex Kernel Changelog
+# DionOS Kernel Changelog
 
 ## [1.0.0-RELEASE] - 2026-07-21
 

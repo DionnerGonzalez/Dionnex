@@ -1,9 +1,9 @@
 /*
- * Userspace libc basic types definitions for Dionnex
+ * Userspace libc basic types definitions for DionOS
  */
 
-#ifndef _DIONNEX_SYS_TYPES_H
-#define _DIONNEX_SYS_TYPES_H
+#ifndef _DIONOS_SYS_TYPES_H
+#define _DIONOS_SYS_TYPES_H
 
 #include <ABI/kernel/internal/kabi.h>
 
@@ -20,4 +20,4 @@ struct timespec {
 	s64 tv_nsec;
 };
 
-#endif /* _DIONNEX_SYS_TYPES_H */
+#endif /* _DIONOS_SYS_TYPES_H */
