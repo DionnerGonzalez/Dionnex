@@ -4,7 +4,9 @@
  */
 #include <kernel/idt.h>
 #include <kernel/printk.h>
+#include <kernel/panic.h>
 #include <drivers/pic.h>
+#include <drivers/apic.h>
 #include <io.h>
 
 static idt_entry_t idt_entries[256];
@@ -31,7 +33,9 @@ void isr_handler(registers_t *regs) {
     if (interrupt_handlers[regs->int_no]) {
         interrupt_handlers[regs->int_no](regs);
     } else {
+        char msg_buf[64];
         printk("Unhandled exception: %u (Error code: 0x%x)\n", regs->int_no, regs->err_code);
+        kernel_panic("Unhandled CPU Exception");
     }
 }
 
@@ -41,6 +45,7 @@ void irq_handler(registers_t *regs) {
     }
 
     if (regs->int_no >= 32 && regs->int_no < 48) {
+        apic_eoi();
         pic_send_eoi((uint8_t)(regs->int_no - 32));
     }
 }

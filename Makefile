@@ -1,5 +1,6 @@
 # ============================================================================
 # Dionnex Monolithic Kernel - Production Makefile
+# Author: Ihosvanni Dionner Gonzalez
 # ============================================================================
 
 CC = gcc
@@ -42,6 +43,7 @@ C_SOURCES = \
 	drivers/rtc.c \
 	drivers/pci.c \
 	drivers/ata.c \
+	drivers/apic.c \
 	drivers/acpi.c \
 	drivers/vesa.c
 
@@ -49,7 +51,8 @@ ASM_SOURCES = \
 	boot/boot.asm \
 	sched/switch.asm \
 	sched/gdt_flush.asm \
-	sched/idt_stubs.asm
+	sched/idt_stubs.asm \
+	sched/syscall_stub.asm
 
 C_OBJECTS = $(C_SOURCES:.c=.o)
 ASM_OBJECTS = $(ASM_SOURCES:.asm=.o)
@@ -71,7 +74,7 @@ iso: all
 	grub-mkrescue -o dionnex.iso iso/
 
 run: all
-	qemu-system-i386 -kernel dionnex.bin -serial stdio
+	qemu-system-i386 -kernel dionnex.bin -serial stdio -m 256M
 
 clean:
 	rm -rf $(C_OBJECTS) $(ASM_OBJECTS) dionnex.bin dionnex.iso iso/boot/dionnex.bin

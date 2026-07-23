@@ -1,5 +1,6 @@
 /* ============================================================================
  * Dionnex Monolithic Kernel - Main Initialization Entry Point
+ * Author: Ihosvanni Dionner Gonzalez
  * ============================================================================
  */
 #include <types.h>
@@ -24,6 +25,7 @@
 #include <drivers/rtc.h>
 #include <drivers/pci.h>
 #include <drivers/ata.h>
+#include <drivers/apic.h>
 #include <drivers/acpi.h>
 #include <drivers/vesa.h>
 #include <mm/pmm.h>
@@ -34,6 +36,7 @@
 #include <fs/vfs.h>
 #include <fs/ramfs.h>
 #include <fs/procfs.h>
+#include <string.h>
 
 void kernel_main(uint32_t magic, uint32_t mbi_addr) {
     // 1. VGA Text Mode
@@ -46,94 +49,98 @@ void kernel_main(uint32_t magic, uint32_t mbi_addr) {
     klog_init();
 
     // 4. Initial KLOG message
-    klog(KLOG_INFO, "Dionnex Monolithic Kernel v0.1.0 starting...\n");
+    pr_info("Dionnex Monolithic Kernel v0.1\n");
 
-    // Multiboot verification
+    // 5. Multiboot verification
     if (magic != MULTIBOOT_BOOTLOADER_MAGIC) {
         kernel_panic("Invalid Multiboot magic signature!");
     }
     multiboot_info_t *mb_info = (multiboot_info_t*)mbi_addr;
 
-    // 5. GDT Descriptor Table
+    // 6. GDT Descriptor Table
     gdt_init();
 
-    // 6. IDT Interrupt Descriptor Table
+    // 7. IDT Interrupt Descriptor Table
     idt_init();
 
-    // 7. Programmable Interrupt Controller (PIC)
-    pic_init();
+    // 8. CPUID Identification & Feature Enumeration
+    cpuid_init();
 
-    // 8. Programmable Interval Timer (PIT @ 100 Hz)
-    timer_init(100);
+    // 9. Advanced Programmable Interrupt Controller (APIC)
+    apic_init();
 
-    // 9. Keyboard Controller
+    // 10. Timer Initialization (1000 Hz)
+    timer_init(1000);
+
+    // 11. Keyboard Controller
     keyboard_init();
 
-    // 10. CPUID Identification & Feature Enumeration
-    cpuid_print_info();
-
-    // 11. Physical Memory Manager (PMM)
-    pmm_init(mb_info);
-
-    // 12. Virtual Memory Manager & Paging (VMM)
-    vmm_init();
-
-    // 13. Dynamic Heap Allocator (kmalloc / kfree)
-    heap_init(0, DIONNEX_HEAP_SIZE_DEFAULT);
-
-    // 14. Real Time Clock (RTC)
+    // 12. Real Time Clock (RTC)
     rtc_init();
 
-    // 15. PCI Bus Enumeration
+    // 13. Physical Memory Manager (PMM)
+    pmm_init(mb_info);
+
+    // 14. Virtual Memory Manager & Paging (VMM)
+    vmm_init();
+
+    // 15. Dynamic Heap Allocator (kmalloc / kfree)
+    heap_init(0, DIONNEX_HEAP_SIZE_DEFAULT);
+
+    // 16. PCI Bus Enumeration
     pci_init();
 
-    // 16. ATA/IDE PIO Disk Driver
+    // 17. ATA/IDE PIO Disk Driver
     ata_init();
 
-    // 17. Virtual Filesystem Layer (VFS)
-    vfs_init();
-
-    // 18. RAM File System
-    ramfs_init();
-
-    // 19. Mount RAMFS to /ram
-    vfs_mount("/ram", ramfs_get_root_node());
-
-    // 20. Process Filesystem (/proc)
-    procfs_init();
-
-    // 21. Mount ProcFS to /proc
-    vfs_mount("/proc", procfs_get_root_node());
-
-    // 22. System Calls (INT 0x80)
-    syscall_init();
-
-    // 23. ELF32 Executable Loader
-    elf_init();
-
-    // 24. Symmetric Multiprocessing Detection
-    smp_init();
-
-    // 25. ACPI Power Management & Reset
+    // 18. ACPI Power Management & Reset
     acpi_init();
 
-    // 26. VESA VBE Graphics Framebuffer
-    vesa_init(mb_info);
+    // 19. Virtual Filesystem Layer (VFS)
+    vfs_init();
 
-    // 27. Dynamic Kernel Module Subsystem
-    module_init_subsystem();
+    // 20. RAM File System
+    ramfs_init();
+    vfs_mount("/ram", ramfs_get_root_node());
 
-    // 28. Task Management
+    // 21. Process Filesystem (/proc)
+    procfs_init();
+    vfs_mount("/proc", procfs_get_root_node());
+
+    // 22. Task Management
     task_init();
 
-    // 29. Multitasking Scheduler
+    // 23. Multitasking Scheduler
     scheduler_init();
 
-    // Enable Hardware Interrupts
+    // 24. System Calls (INT 0x80)
+    syscall_init();
+
+    // Additional hardware & subsystem setup
+    elf_init();
+    smp_init();
+    vesa_init(mb_info);
+    module_init_subsystem();
+
+    // 25. Log completion
+    pr_info("All subsystems initialized\n");
+
+    // 26. Init commands
+    klog(KLOG_INFO, "Running init commands...\n");
+    ramfs_create("welcome.txt");
+    ramfs_write("welcome.txt", (const uint8_t*)"Welcome to Dionnex v0.1\n", 24);
+
+    ramfs_create("motd.txt");
+    ramfs_write("motd.txt", (const uint8_t*)"Dionnex Monolithic Kernel\nGPLv2\nType 'help' for commands.\n", 57);
+
+    printk("\n");
+    printk("  Welcome to Dionnex v0.1\n");
+    printk("  Type 'help' for available commands.\n");
+    printk("  Type 'neofetch' for system info.\n\n");
+
+    // 27. Enable Hardware Interrupts
     asm volatile ("sti");
 
-    klog(KLOG_INFO, "All kernel subsystems successfully initialized\n");
-
-    // 30 & 31. Interactive Kernel Shell
+    // 28. Interactive Kernel Shell
     shell_run();
 }
