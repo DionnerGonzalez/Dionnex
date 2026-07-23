@@ -3,7 +3,7 @@
 # ============================================================================
 
 CC = gcc
-CFLAGS = -m32 -ffreestanding -nostdlib -nostdinc -fno-builtin -fno-stack-protector -fno-stack-check -Wall -Wextra -Iinclude
+CFLAGS = -m32 -ffreestanding -nostdlib -nostdinc -fno-builtin -fno-stack-protector -fno-stack-check -Wall -Wextra -Iinclude -I.
 
 AS = nasm
 ASFLAGS = -f elf32
@@ -13,20 +13,37 @@ LDFLAGS = -m elf_i386 -T linker.ld -nostdlib
 
 C_SOURCES = \
 	kernel/main.c \
+	kernel/string.c \
 	kernel/shell.c \
 	kernel/printk.c \
 	kernel/panic.c \
+	kernel/klog.c \
+	kernel/cpuid.c \
+	kernel/syscall.c \
+	kernel/elf.c \
+	kernel/module.c \
+	kernel/debug.c \
+	kernel/smp.c \
 	kernel/gdt.c \
 	kernel/idt.c \
 	kernel/timer.c \
 	mm/pmm.c \
 	mm/vmm.c \
+	mm/heap.c \
 	sched/task.c \
 	sched/scheduler.c \
+	fs/vfs.c \
 	fs/ramfs.c \
+	fs/procfs.c \
 	drivers/vga.c \
 	drivers/keyboard.c \
-	drivers/pic.c
+	drivers/pic.c \
+	drivers/serial.c \
+	drivers/rtc.c \
+	drivers/pci.c \
+	drivers/ata.c \
+	drivers/acpi.c \
+	drivers/vesa.c
 
 ASM_SOURCES = \
 	boot/boot.asm \

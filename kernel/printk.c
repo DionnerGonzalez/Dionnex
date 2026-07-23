@@ -4,6 +4,8 @@
  */
 #include <kernel/printk.h>
 #include <drivers/vga.h>
+#include <drivers/serial.h>
+#include <string.h>
 #include <stdarg.h>
 
 static void printk_utoa(uint32_t val, char *buf, int base, bool uppercase) {
@@ -40,6 +42,19 @@ static void printk_itoa(int32_t val, char *buf, int base) {
     }
 }
 
+static void printk_out_char(char c) {
+    vga_putchar(c);
+    if (c == '\n') serial_putchar('\r');
+    serial_putchar(c);
+}
+
+static void printk_out_str(const char *s) {
+    if (!s) return;
+    while (*s) {
+        printk_out_char(*s++);
+    }
+}
+
 void printk(const char *fmt, ...) {
     if (!fmt) return;
 
@@ -50,7 +65,7 @@ void printk(const char *fmt, ...) {
 
     while (*fmt) {
         if (*fmt != '%') {
-            vga_putchar(*fmt);
+            printk_out_char(*fmt);
             fmt++;
             continue;
         }
@@ -62,46 +77,46 @@ void printk(const char *fmt, ...) {
             case 's': {
                 const char *str = va_arg(args, const char *);
                 if (!str) str = "(null)";
-                vga_write(str);
+                printk_out_str(str);
                 break;
             }
             case 'd':
             case 'i': {
                 int32_t val = va_arg(args, int32_t);
                 printk_itoa(val, buf, 10);
-                vga_write(buf);
+                printk_out_str(buf);
                 break;
             }
             case 'u': {
                 uint32_t val = va_arg(args, uint32_t);
                 printk_utoa(val, buf, 10, false);
-                vga_write(buf);
+                printk_out_str(buf);
                 break;
             }
             case 'x': {
                 uint32_t val = va_arg(args, uint32_t);
                 printk_utoa(val, buf, 16, false);
-                vga_write(buf);
+                printk_out_str(buf);
                 break;
             }
             case 'X': {
                 uint32_t val = va_arg(args, uint32_t);
                 printk_utoa(val, buf, 16, true);
-                vga_write(buf);
+                printk_out_str(buf);
                 break;
             }
             case 'c': {
                 char c = (char)va_arg(args, int);
-                vga_putchar(c);
+                printk_out_char(c);
                 break;
             }
             case '%': {
-                vga_putchar('%');
+                printk_out_char('%');
                 break;
             }
             default: {
-                vga_putchar('%');
-                vga_putchar(*fmt);
+                printk_out_char('%');
+                printk_out_char(*fmt);
                 break;
             }
         }

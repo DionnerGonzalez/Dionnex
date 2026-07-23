@@ -3,8 +3,10 @@
 ; ============================================================================
 
 global idt_flush
+global syscall_isr_stub
 extern isr_handler
 extern irq_handler
+extern syscall_handler
 
 idt_flush:
     mov eax, [esp + 4]
@@ -86,6 +88,31 @@ IRQ 12, 44
 IRQ 13, 45
 IRQ 14, 46
 IRQ 15, 47
+
+syscall_isr_stub:
+    cli
+    pusha
+    push ds
+    push es
+    push fs
+    push gs
+
+    mov ax, 0x10
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+
+    push esp
+    call syscall_handler
+    add esp, 4
+
+    pop gs
+    pop fs
+    pop es
+    pop ds
+    popa
+    iret
 
 isr_common_stub:
     pusha
