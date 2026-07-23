@@ -9,6 +9,7 @@
 #include <kernel/timer.h>
 #include <kernel/cpuid.h>
 #include <kernel/klog.h>
+#include <kernel/module_loader.h>
 #include <drivers/pci.h>
 #include <drivers/ata.h>
 #include <string.h>
@@ -65,13 +66,7 @@ static int procfs_generate_content(const char *name, char *buf, uint32_t max_len
         strcat(buf, "Block Devices:\n");
         strcat(buf, "  1 ata/primary-master\n  2 ata/primary-slave\n");
     } else if (strcmp(name, "modules") == 0) {
-        strcat(buf, "Registered Kernel Modules:\n");
-        strcat(buf, "  pmm      v0.1.0 [loaded]\n");
-        strcat(buf, "  vmm      v0.1.0 [loaded]\n");
-        strcat(buf, "  heap     v0.1.0 [loaded]\n");
-        strcat(buf, "  sched    v0.1.0 [loaded]\n");
-        strcat(buf, "  vfs      v0.1.0 [loaded]\n");
-        strcat(buf, "  procfs   v0.1.0 [loaded]\n");
+        module_get_proc_info(buf, max_len);
     } else if (strcmp(name, "tasks") == 0) {
         strcat(buf, "PID  NAME             STATE\n");
         strcat(buf, "0    kernel_idle      RUNNING\n");

@@ -40,6 +40,7 @@
 #include <kernel/process.h>
 #include <kernel/scheduler_process.h>
 #include <kernel/initrd.h>
+#include <kernel/module_loader.h>
 #include <string.h>
 
 void kernel_main(uint32_t magic, uint32_t mbi_addr) {
@@ -125,6 +126,7 @@ void kernel_main(uint32_t magic, uint32_t mbi_addr) {
     process_init();
     sched_proc_init();
     initrd_init();
+    module_loader_init();
 
     // Additional hardware & subsystem setup
     elf_init();
@@ -168,6 +170,15 @@ void kernel_main(uint32_t magic, uint32_t mbi_addr) {
     printk("  Welcome to Dionnex v0.1\n");
     printk("  Type 'help' for available commands.\n");
     printk("  Type 'neofetch' for system info.\n\n");
+
+    // Load built-in kernel modules
+    printk("Module: Loading built-in modules...\n");
+    uint32_t hello_sz = 0;
+    uint8_t *hello_data = initrd_get_file("hello.ko", &hello_sz);
+    if (hello_data && hello_sz > 0) {
+        module_load_binary("hello", hello_data, hello_sz);
+    }
+    printk("Module: Built-in modules loaded. Use 'insmod' to load more.\n");
 
     // 27. Enable Hardware Interrupts
     asm volatile ("sti");

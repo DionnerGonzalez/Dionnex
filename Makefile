@@ -23,6 +23,8 @@ C_SOURCES = \
 	kernel/syscall.c \
 	kernel/elf.c \
 	kernel/module.c \
+	kernel/module_loader.c \
+	kernel/module_symbols.c \
 	kernel/debug.c \
 	kernel/smp.c \
 	kernel/gdt.c \
@@ -62,18 +64,24 @@ ASM_SOURCES = \
 
 C_OBJECTS = $(C_SOURCES:.c=.o)
 ASM_OBJECTS = $(ASM_SOURCES:.asm=.o)
-INITRD_OBJECTS = initrd_init.o initrd_shell.o
+INITRD_OBJECTS = initrd_init.o initrd_shell.o initrd_hello.o initrd_counter.o initrd_sysinfo.o
 
-all: user initrd $(C_OBJECTS) $(ASM_OBJECTS)
+all: user modules initrd $(C_OBJECTS) $(ASM_OBJECTS)
 	$(LD) $(LDFLAGS) -o dionnex.bin $(ASM_OBJECTS) $(C_OBJECTS) $(INITRD_OBJECTS)
-	@echo "=== Dionnex Monolithic Kernel built successfully with Ring 3 Userspace ==="
+	@echo "=== Dionnex Monolithic Kernel built successfully with Relocatable Module Support ==="
 
 user:
 	$(MAKE) -C user
 
-initrd: user
+modules:
+	$(MAKE) -C modules
+
+initrd: user modules
 	objcopy -I binary -O elf32-i386 -B i386 user/init.elf initrd_init.o --rename-section .data=.rodata,alloc,load,readonly,data,contents
 	objcopy -I binary -O elf32-i386 -B i386 user/shell_user.elf initrd_shell.o --rename-section .data=.rodata,alloc,load,readonly,data,contents
+	objcopy -I binary -O elf32-i386 -B i386 modules/hello.ko initrd_hello.o --rename-section .data=.rodata,alloc,load,readonly,data,contents --redefine-sym _binary_modules_hello_ko_start=_binary_hello_ko_start --redefine-sym _binary_modules_hello_ko_end=_binary_hello_ko_end
+	objcopy -I binary -O elf32-i386 -B i386 modules/counter.ko initrd_counter.o --rename-section .data=.rodata,alloc,load,readonly,data,contents --redefine-sym _binary_modules_counter_ko_start=_binary_counter_ko_start --redefine-sym _binary_modules_counter_ko_end=_binary_counter_ko_end
+	objcopy -I binary -O elf32-i386 -B i386 modules/sysinfo_mod.ko initrd_sysinfo.o --rename-section .data=.rodata,alloc,load,readonly,data,contents --redefine-sym _binary_modules_sysinfo_mod_ko_start=_binary_sysinfo_mod_ko_start --redefine-sym _binary_modules_sysinfo_mod_ko_end=_binary_sysinfo_mod_ko_end
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -92,6 +100,7 @@ run: all
 
 clean:
 	$(MAKE) -C user clean
+	$(MAKE) -C modules clean
 	rm -rf $(C_OBJECTS) $(ASM_OBJECTS) $(INITRD_OBJECTS) dionnex.bin dionnex.iso iso/boot/dionnex.bin
 
-.PHONY: all user initrd iso run clean
+.PHONY: all user modules initrd iso run clean

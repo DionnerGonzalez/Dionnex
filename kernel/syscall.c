@@ -10,6 +10,7 @@
 #include <kernel/process.h>
 #include <kernel/elf_loader.h>
 #include <kernel/initrd.h>
+#include <kernel/module_loader.h>
 #include <drivers/vga.h>
 #include <drivers/keyboard.h>
 #include <drivers/rtc.h>
@@ -244,6 +245,23 @@ static int32_t sys_nanosleep_impl(uint32_t ms, uint32_t b, uint32_t c, uint32_t 
     return 0;
 }
 
+static int32_t sys_init_module_impl(uint32_t buf_addr, uint32_t size, uint32_t name_addr, uint32_t d, uint32_t e) {
+    (void)d; (void)e;
+    if (!buf_addr || size == 0 || !name_addr) return -1;
+    return module_load_binary((const char*)name_addr, (uint8_t*)buf_addr, size);
+}
+
+static int32_t sys_delete_module_impl(uint32_t name_addr, uint32_t b, uint32_t c, uint32_t d, uint32_t e) {
+    (void)b; (void)c; (void)d; (void)e;
+    if (!name_addr) return -1;
+    return module_unload_binary((const char*)name_addr);
+}
+
+static int32_t sys_query_module_impl(uint32_t name_addr, uint32_t buf_addr, uint32_t c, uint32_t d, uint32_t e) {
+    (void)name_addr; (void)buf_addr; (void)c; (void)d; (void)e;
+    return 0;
+}
+
 void syscall_handler(registers_t *regs) {
     if (!regs) return;
 
@@ -278,6 +296,9 @@ void syscall_init(void) {
     syscall_table[SYS_GETTIMEOFDAY] = sys_gettimeofday_impl;
     syscall_table[SYS_UNAME]        = sys_uname_impl;
     syscall_table[SYS_NANOSLEEP]    = sys_nanosleep_impl;
+    syscall_table[SYS_INIT_MODULE]   = sys_init_module_impl;
+    syscall_table[SYS_DELETE_MODULE] = sys_delete_module_impl;
+    syscall_table[SYS_QUERY_MODULE]  = sys_query_module_impl;
     syscall_table[SYS_EXIT_GROUP]   = sys_exit_impl;
 
     idt_set_gate(0x80, (uint32_t)syscall_isr_stub, 0x08, 0xEE); // DPL=3 user accessible

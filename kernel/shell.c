@@ -27,6 +27,7 @@
 
 #include <kernel/process.h>
 #include <kernel/initrd.h>
+#include <kernel/module_loader.h>
 
 static char cmd_buf[256];
 static uint32_t cmd_pos = 0;
@@ -98,7 +99,10 @@ static void shell_exec(char *buf) {
         printk("  disk            - List ATA hard disk drives\n");
         printk("  date            - Show Real Time Clock (RTC) date and time\n");
         printk("  dmesg / klog    - Dump ring buffer kernel logs\n");
-        printk("  lsmod           - List loaded kernel modules\n");
+        printk("  lsmod           - List active loaded kernel modules\n");
+        printk("  insmod <path>   - Load relocatable kernel module (.ko)\n");
+        printk("  rmmod <name>    - Unload active kernel module\n");
+        printk("  modinfo <name>  - Display kernel module metadata\n");
         printk("  smp             - List SMP CPU cores and topology\n");
         printk("  vesa            - Run VESA VBE graphics demo\n");
         printk("  memstat         - Show physical memory and heap diagnostics\n");
@@ -130,7 +134,102 @@ static void shell_exec(char *buf) {
     } else if (strcmp(cmd, "dmesg") == 0 || strcmp(cmd, "klog") == 0) {
         klog_dump();
     } else if (strcmp(cmd, "lsmod") == 0) {
-        module_list();
+        module_list_loaded();
+    } else if (strcmp(cmd, "insmod") == 0) {
+        if (arg1) {
+            uint32_t size = 0;
+            uint8_t *data = NULL;
+            uint8_t free_data = 0;
+
+            // Check initrd
+            data = initrd_get_file(arg1, &size);
+
+            // If not in initrd, check VFS
+            if (!data) {
+                char path_buf[256];
+                if (arg1[0] == '/') {
+                    strcpy(path_buf, arg1);
+                } else {
+                    strcpy(path_buf, "/ram/");
+                    strcat(path_buf, arg1);
+                }
+                vfs_node_t *node = vfs_open(path_buf);
+                if (node && node->length > 0) {
+                    size = node->length;
+                    data = (uint8_t*)kmalloc(size);
+                    if (data) {
+                        int r = vfs_read(node, 0, size, data);
+                        if (r > 0) {
+                            free_data = 1;
+                        } else {
+                            kfree(data);
+                            data = NULL;
+                        }
+                    }
+                    vfs_close(node);
+                }
+            }
+
+            if (data && size > 0) {
+                char mod_name[64];
+                const char *filename = strrchr(arg1, '/');
+                if (filename) {
+                    filename++;
+                } else {
+                    filename = arg1;
+                }
+                strncpy(mod_name, filename, 63);
+                mod_name[63] = '\0';
+
+                char *dot = strstr(mod_name, ".ko");
+                if (dot) *dot = '\0';
+
+                int res = module_load_binary(mod_name, data, size);
+                if (res == 0) {
+                    printk("insmod: '%s' loaded\n", mod_name);
+                } else {
+                    printk("insmod: failed to load '%s'\n", mod_name);
+                }
+
+                if (free_data) {
+                    kfree(data);
+                }
+            } else {
+                printk("insmod: cannot open '%s'\n", arg1);
+            }
+        } else {
+            printk("Usage: insmod <path>\n");
+        }
+    } else if (strcmp(cmd, "rmmod") == 0) {
+        if (arg1) {
+            char mod_name[64];
+            strncpy(mod_name, arg1, 63);
+            mod_name[63] = '\0';
+            char *dot = strstr(mod_name, ".ko");
+            if (dot) *dot = '\0';
+
+            int res = module_unload_binary(mod_name);
+            if (res == 0) {
+                printk("rmmod: '%s' unloaded\n", mod_name);
+            } else {
+                printk("rmmod: '%s' not found or in use\n", mod_name);
+            }
+        } else {
+            printk("Usage: rmmod <name>\n");
+        }
+    } else if (strcmp(cmd, "modinfo") == 0) {
+        if (arg1) {
+            char mod_name[64];
+            strncpy(mod_name, arg1, 63);
+            mod_name[63] = '\0';
+            char *dot = strstr(mod_name, ".ko");
+            if (dot) *dot = '\0';
+
+            printk("Module Information: %s\n", mod_name);
+            module_list_loaded();
+        } else {
+            printk("Usage: modinfo <name>\n");
+        }
     } else if (strcmp(cmd, "smp") == 0) {
         smp_list_cpus();
     } else if (strcmp(cmd, "vesa") == 0) {

@@ -9,13 +9,23 @@ Dionnex is a 32-bit x86 (i686) monolithic operating system kernel written in C a
 
 ## Architecture Overview
 
-Dionnex implements a monolithic architecture providing bare-metal x86 management with low-level execution primitives, Ring 3 userspace isolation, and standard device abstractions.
+Dionnex implements a modular monolithic architecture providing bare-metal x86 management with low-level execution primitives, Ring 3 userspace isolation, standard device abstractions, and dynamic kernel module loading.
+
+### Relocatable Kernel Modules (.ko)
+*Portions adapted from Linux kernel module loader (GPLv2)*
+- **Modular Monolithic Design**: Loads and unloads binary relocatable ELF modules (`.ko`) directly into kernel space at runtime without restarting or recompiling the kernel.
+- **ELF32 ET_REL Processing**: Parses ELF section headers (`SHT_PROGBITS`, `SHT_NOBITS`, `SHT_SYMTAB`, `SHT_STRTAB`, `SHT_REL`), allocates kernel memory, and maps executable module sections.
+- **Symbol Resolution Engine**: Resolves external undefined symbols referenced by modules against kernel exported symbols defined in `module_symbols.c` (e.g., `printk`, `kmalloc`, `kfree`, `timer_get_ticks`, `vfs_open`, `pci_get_count`).
+- **x86 Relocation Fixups**: Applies `R_386_32` absolute memory fixups and `R_386_PC32` relative PC-displacement fixups directly to module code.
+- **Module Lifecycle**: Executes `module_init()` upon loading and `module_cleanup()` upon unloading via `rmmod`.
+- **ProcFS Integration**: Real-time module information exported via `/proc/modules` in Linux-style status format (`hello 4096 0 - Live 0x00400000`).
+- **Example Modules**: Includes sample modules `hello.ko`, `counter.ko`, and `sysinfo_mod.ko`.
 
 ### Ring 3 Userspace & Process Isolation
 - **Ring Transitions & TSS**: Employs a Task State Segment (TSS) at GDT descriptor index 5 (`0x28`) for Ring 3 to Ring 0 stack switching (`esp0`).
 - **Process Management**: User processes run with separate 1MB stack pages (`0xBFFFFFFF`), page directory isolation, virtual code base at `0x08048000`, and dynamically managed program breaks (`brk`).
 - **ELF32 Executable Loader**: Validates and maps ELF32 executable segments (`PT_LOAD`) directly into process user memory pages with proper permission flags (`VMM_USER`, `VMM_WRITABLE`).
-- **InitRD & User Binaries**: Embedded RAM disk holding pre-compiled static Ring 3 user ELF binaries (`init.elf`, `shell_user.elf`).
+- **InitRD & User Binaries**: Embedded RAM disk holding pre-compiled static Ring 3 user ELF binaries (`init.elf`, `shell_user.elf`) and kernel modules (`hello.ko`, `counter.ko`, `sysinfo_mod.ko`).
 - **Preemptive Process Scheduler**: Preemptive vruntime process scheduler running alongside kernel tasks.
 - **Fault Protection**: Ring 3 CPU exceptions gracefully terminate offending user processes (`process_exit`) without triggering kernel panics.
 
@@ -48,7 +58,7 @@ Dionnex implements a monolithic architecture providing bare-metal x86 management
 ### Virtual Filesystem (VFS) & ProcFS
 - **VFS Abstraction Layer**: Tree-structured filesystem hierarchy with standard `read`, `write`, `readdir`, and `finddir` interface pointers.
 - **RAMFS Mount**: In-memory filesystem mounted at `/ram` for volatile file read/write operations.
-- **ProcFS Mount**: Dynamic virtual filesystem mounted at `/proc` exposing real-time kernel statistics (`/proc/version`, `/proc/cpuinfo`, `/proc/meminfo`, `/proc/uptime`, `/proc/pci`, `/proc/disk`, `/proc/klog`, `/proc/tasks`, `/proc/devices`).
+- **ProcFS Mount**: Dynamic virtual filesystem mounted at `/proc` exposing real-time kernel statistics (`/proc/version`, `/proc/cpuinfo`, `/proc/meminfo`, `/proc/uptime`, `/proc/modules`, `/proc/pci`, `/proc/disk`, `/proc/klog`, `/proc/tasks`, `/proc/devices`).
 
 ### Serial COM1 Debugging
 - **8250 UART Driver**: Configures COM1 (`0x3F8`) at 115200 baud, 8N1, with FIFO enabled.
@@ -83,6 +93,9 @@ Dionnex implements a monolithic architecture providing bare-metal x86 management
 | 78 | `sys_gettimeofday` | tv, tz | Get current Real-Time Clock epoch |
 | 122 | `sys_uname` | buf | Get system identification string |
 | 162 | `sys_nanosleep` | ms | Sleep process execution for milliseconds |
+| 175 | `sys_init_module` | buf, size, name | Load kernel module from memory |
+| 176 | `sys_delete_module` | name | Unload kernel module |
+| 177 | `sys_query_module` | name, buf | Query loaded kernel module information |
 | 252 | `sys_exit_group` | code | Terminate all threads in process group |
 
 ---
@@ -102,12 +115,21 @@ Dionnex implements a monolithic architecture providing bare-metal x86 management
 │   ├── init.ld
 │   ├── shell_user.c
 │   └── Makefile
+├── modules/
+│   ├── hello.c
+│   ├── counter.c
+│   ├── sysinfo_mod.c
+│   └── Makefile
 ├── kernel/
 │   ├── main.c
 │   ├── shell.c
 │   ├── shell.h
 │   ├── process.c
 │   ├── process.h
+│   ├── module_loader.c
+│   ├── module_loader.h
+│   ├── module_symbols.c
+│   ├── module_symbols.h
 │   ├── tss.c
 │   ├── tss.h
 │   ├── elf_loader.c
@@ -206,8 +228,11 @@ Dionnex implements a monolithic architecture providing bare-metal x86 management
 
 ### Commands
 ```bash
-# Compile kernel binary and ring 3 userspace ELFs
+# Compile kernel binary, ring 3 ELFs, and relocatable modules (.ko)
 make
+
+# Compile modules specifically
+cd modules && make
 
 # Run in QEMU emulator with serial terminal output
 make run
@@ -229,7 +254,10 @@ make clean
 | `disk` | Displays connected ATA/IDE hard disk drives and capacities |
 | `date` | Shows Real-Time Clock (RTC) date, time, and Unix epoch timestamp |
 | `dmesg` / `klog` | Dumps the kernel ring buffer logs |
-| `lsmod` | Lists loaded kernel modules |
+| `lsmod` | Lists active loaded kernel modules |
+| `insmod <path>` | Loads relocatable kernel module (`.ko`) from file or InitRD |
+| `rmmod <name>` | Unloads active kernel module |
+| `modinfo <name>` | Displays kernel module metadata |
 | `smp` | Displays detected SMP CPU cores and topology |
 | `vesa` | Runs the VESA VBE graphics display test demo |
 | `memstat` | Shows physical memory and dynamic heap diagnostics |
@@ -238,7 +266,7 @@ make clean
 | `ps` / `procs` | Lists active kernel tasks and Ring 3 user processes |
 | `kill <pid>` | Terminates target user process by sending SIGKILL |
 | `exec <elf>` | Loads and executes specified user ELF binary |
-| `initrd` | Lists embedded InitRD RAM disk user binaries |
+| `initrd` | Lists embedded InitRD RAM disk user binaries and modules |
 | `ls <path>` | Lists directory entries from VFS |
 | `cat <file>` | Displays file contents from VFS |
 | `echo <msg>` | Echoes message or writes output to VFS (`echo msg > /ram/file.txt`) |

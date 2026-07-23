@@ -29,6 +29,9 @@
 #define SYS_GETTIMEOFDAY  78
 #define SYS_UNAME         122
 #define SYS_NANOSLEEP     162
+#define SYS_INIT_MODULE   175
+#define SYS_DELETE_MODULE 176
+#define SYS_QUERY_MODULE  177
 #define SYS_EXIT_GROUP    252
 
 // Internal aliases for existing functions
