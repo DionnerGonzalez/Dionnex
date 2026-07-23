@@ -1,45 +1,52 @@
 /* ============================================================================
- * Dionnex Kernel - Programmable Interval Timer Driver (kernel/timer.c)
+ * Dionnex Monolithic Kernel - Programmable Interval Timer (PIT 8253/8254)
  * ============================================================================
  */
-#include <kernel/kernel.h>
+#include <kernel/timer.h>
+#include <kernel/idt.h>
+#include <kernel/printk.h>
+#include <drivers/pic.h>
+#include <io.h>
 
-static uint64_t timer_ticks = 0;
-static uint32_t timer_frequency = 100;
+#define PIT_CHANNEL0  0x40
+#define PIT_CMD       0x43
+#define PIT_FREQUENCY 1193182
 
-void timer_irq_handler(void) {
+static uint32_t timer_ticks = 0;
+static uint32_t timer_freq = 1000;
+
+extern void schedule(void);
+
+static void timer_handler(registers_t *regs) {
+    (void)regs;
     timer_ticks++;
-    if (timer_ticks % 100 == 0) {
-        // Yield to scheduler every 1 second or on slice exhaustion
+
+    if (timer_ticks % 10 == 0) {
         schedule();
     }
 }
 
-void pit_init(uint32_t frequency) {
-    timer_frequency = frequency;
-    uint32_t divisor = 1193180 / frequency;
+void timer_init(uint32_t frequency) {
+    timer_freq = frequency;
+    uint32_t divisor = PIT_FREQUENCY / frequency;
 
-    // Send Command Byte: Channel 0, Access mode lobyte/hibyte, Mode 2 (rate generator)
-    outb(0x43, 0x36);
+    outb(PIT_CMD, 0x36); // Channel 0, lobyte/hibyte, mode 3 (square wave generator)
+    outb(PIT_CHANNEL0, (uint8_t)(divisor & 0xFF));
+    outb(PIT_CHANNEL0, (uint8_t)((divisor >> 8) & 0xFF));
 
-    // Divisor low and high bytes
-    uint8_t l = (uint8_t)(divisor & 0xFF);
-    uint8_t h = (uint8_t)((divisor >> 8) & 0xFF);
+    isr_register_handler(32, timer_handler);
+    pic_enable_irq(0);
 
-    outb(0x40, l);
-    outb(0x40, h);
-
-    // Register with IRQ0
-    irq_register_handler(0, timer_irq_handler);
+    printk("Timer: PIT initialized at %u Hz (divisor: %u)\n", frequency, divisor);
 }
 
-uint64_t pit_get_ticks(void) {
+uint32_t timer_get_ticks(void) {
     return timer_ticks;
 }
 
-void ksleep(uint32_t ms) {
-    uint64_t target_ticks = timer_ticks + (ms * timer_frequency) / 1000;
-    while (timer_ticks < target_ticks) {
-        hlt();
+void timer_sleep(uint32_t ms) {
+    uint32_t target = timer_ticks + (ms * timer_freq / 1000);
+    while (timer_ticks < target) {
+        asm volatile("hlt");
     }
 }

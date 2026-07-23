@@ -1,5 +1,0 @@
-What:           /sys/kernel/version
-Date:           July 2026
-Contact:        DionOS Architecture Group <core@dionos.org>
-Description:    Exposes DionOS kernel release version string and build timestamp.
-Users:          System utilities, uname, init scripts.

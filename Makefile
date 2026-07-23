@@ -1,79 +1,62 @@
 # ============================================================================
-# Dionnex Kernel - Production Build System Makefile
+# Dionnex Monolithic Kernel - Production Makefile
 # ============================================================================
 
 CC = gcc
-AS = nasm
-LD = ld
+CFLAGS = -m32 -ffreestanding -nostdlib -nostdinc -fno-builtin -fno-stack-protector -fno-stack-check -Wall -Wextra -Iinclude
 
-CFLAGS = -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector -fno-pie -Wall -Wextra -I. -Iinclude -Ikernel
+AS = nasm
 ASFLAGS = -f elf32
-LDFLAGS = -m elf_i386 -T arch/x86_64/linker.ld
+
+LD = ld
+LDFLAGS = -m elf_i386 -T linker.ld -nostdlib
 
 C_SOURCES = \
-	kernel/init.c \
-	kernel/kprintf.c \
-	kernel/timer.c \
-	kernel/keyboard.c \
-	kernel/panic.c \
+	kernel/main.c \
 	kernel/shell.c \
-	memory/pmm.c \
-	memory/vmm.c \
-	memory/kmalloc.c \
-	process/task.c \
-	process/cfs.c \
-	process/elf.c \
-	drivers/irq.c \
-	drivers/drivers.c \
-	syscall/syscall_table.c \
-	filesystem/vfs.c \
-	filesystem/initramfs.c \
-	arch/x86_64/gdt.c \
-	arch/x86_64/idt.c \
-	arch/x86_64/tss.c \
-	networking/net_core.c \
-	security/capability.c \
-	virtualization/kvm.c \
-	power_management/pm.c \
-	hardware_abstraction/hal.c \
-	driver_framework/device.c \
-	performance/perf.c \
-	monitoring/telemetry.c \
-	userspace_interface/sys_interface.c \
-	testing/ktest.c \
-	build_system/kbuild.c \
-	kernel_api/api.c \
-	memory_advanced/numa.c \
-	reliability/watchdog.c \
-	compatibility/posix.c
+	kernel/printk.c \
+	kernel/panic.c \
+	kernel/gdt.c \
+	kernel/idt.c \
+	kernel/timer.c \
+	mm/pmm.c \
+	mm/vmm.c \
+	sched/task.c \
+	sched/scheduler.c \
+	fs/ramfs.c \
+	drivers/vga.c \
+	drivers/keyboard.c \
+	drivers/pic.c
 
 ASM_SOURCES = \
-	arch/x86_64/boot.asm \
-	arch/x86_64/gdt_flush.asm \
-	arch/x86_64/idt_flush.asm \
-	arch/x86_64/isr_stubs.asm \
-	arch/x86_64/switch.asm
+	boot/boot.asm \
+	sched/switch.asm \
+	sched/gdt_flush.asm \
+	sched/idt_stubs.asm
 
-C_OBJS = $(C_SOURCES:.c=.o)
-ASM_OBJS = $(ASM_SOURCES:.asm=.o)
-OBJS = $(ASM_OBJS) $(C_OBJS)
+C_OBJECTS = $(C_SOURCES:.c=.o)
+ASM_OBJECTS = $(ASM_SOURCES:.asm=.o)
 
-all: dionnex_kernel.bin
-
-dionnex_kernel.bin: $(OBJS)
-	@echo "[LD] Linking Dionnex Microkernel Binary image..."
-	$(LD) $(LDFLAGS) -o $@ $(OBJS)
-	@echo "[SUCCESS] Kernel built successfully: dionnex_kernel.bin"
+all: $(C_OBJECTS) $(ASM_OBJECTS)
+	$(LD) $(LDFLAGS) -o dionnex.bin $(ASM_OBJECTS) $(C_OBJECTS)
+	@echo "=== Dionnex Monolithic Kernel built successfully ==="
 
 %.o: %.c
-	@echo "[CC] Compiling $<"
 	$(CC) $(CFLAGS) -c $< -o $@
 
 %.o: %.asm
-	@echo "[AS] Assembling $<"
 	$(AS) $(ASFLAGS) $< -o $@
 
-clean:
-	rm -f $(OBJS) dionnex_kernel.bin dionnex_kernel.iso
+iso: all
+	mkdir -p iso/boot/grub
+	cp dionnex.bin iso/boot/
+	cp iso/boot/grub/grub.cfg iso/boot/grub/ 2>/dev/null || true
+	grub-mkrescue -o dionnex.iso iso/
 
-.PHONY: all clean
+run: all
+	qemu-system-i386 -kernel dionnex.bin -serial stdio
+
+clean:
+	rm -rf $(C_OBJECTS) $(ASM_OBJECTS) dionnex.bin dionnex.iso iso/boot/dionnex.bin
+
+.PHONY: all iso run clean

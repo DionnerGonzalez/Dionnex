@@ -1,5 +1,0 @@
-What:           /sys/bus/pci/devices/
-Date:           July 2026
-Contact:        Driver Core Maintainers <drivers@dionos.org>
-Description:    Experimental sysfs tree exposing PCI device vendor/device IDs and BAR allocations.
-Users:          lspci, userland device drivers.

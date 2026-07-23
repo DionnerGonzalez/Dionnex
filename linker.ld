@@ -1,39 +1,49 @@
 /* ============================================================================
- * Dionnex Real OS Kernel - x86 Linker Script (linker.ld)
+ * Dionnex Monolithic Kernel - Linker Script
  * ============================================================================
  */
+
+OUTPUT_FORMAT(elf32-i386)
+OUTPUT_ARCH(i386)
 ENTRY(_start)
 
 SECTIONS
 {
-    /* Physical load address for x86 Protected Mode Kernel */
-    . = 0x00100000; /* 1MB boundary */
+    . = 1M;
 
-    /* Multiboot header and code segment */
-    .text ALIGN(0x1000) :
+    _kernel_start = .;
+
+    .multiboot ALIGN(4K) :
     {
         *(.multiboot)
+    }
+
+    .text ALIGN(4K) :
+    {
         *(.text)
     }
 
-    /* Read-only data segment */
-    .rodata ALIGN(0x1000) :
+    .rodata ALIGN(4K) :
     {
-        *(.rodata*)
+        *(.rodata)
     }
 
-    /* Read-write data segment */
-    .data ALIGN(0x1000) :
+    .data ALIGN(4K) :
     {
         *(.data)
     }
 
-    /* Uninitialized data segment (stack, BSS) */
-    .bss ALIGN(0x1000) :
+    .bss ALIGN(4K) :
     {
         *(COMMON)
         *(.bss)
     }
 
     _kernel_end = .;
+
+    /DISCARD/ :
+    {
+        *(.comment)
+        *(.note*)
+    }
 }

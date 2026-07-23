@@ -1,4 +1,0 @@
-What:           sys_old_select, sys_sysfs
-Date:           July 2026
-Contact:        Syscall Maintainers <syscall@dionos.org>
-Description:    Legacy 32-bit compatibility syscalls scheduled for removal in v2.0.
