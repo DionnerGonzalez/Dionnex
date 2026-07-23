@@ -29,11 +29,21 @@ void isr_unregister_handler(uint8_t n) {
     interrupt_handlers[n] = NULL;
 }
 
+#include <kernel/process.h>
+#include <kernel/scheduler_process.h>
+
 void isr_handler(registers_t *regs) {
     if (interrupt_handlers[regs->int_no]) {
         interrupt_handlers[regs->int_no](regs);
     } else {
-        char msg_buf[64];
+        if (regs->cs & 3) { // Exception triggered in User Ring 3
+            if (current_process) {
+                printk("Process '%s' (pid %u) caused exception %u at 0x%x (Error: 0x%x)\n",
+                       current_process->name, current_process->pid, regs->int_no, regs->eip, regs->err_code);
+                process_exit(128 + (int)regs->int_no);
+                return;
+            }
+        }
         printk("Unhandled exception: %u (Error code: 0x%x)\n", regs->int_no, regs->err_code);
         kernel_panic("Unhandled CPU Exception");
     }
@@ -42,6 +52,10 @@ void isr_handler(registers_t *regs) {
 void irq_handler(registers_t *regs) {
     if (interrupt_handlers[regs->int_no]) {
         interrupt_handlers[regs->int_no](regs);
+    }
+
+    if (regs->int_no == 32) { // Timer IRQ0
+        sched_proc_tick();
     }
 
     if (regs->int_no >= 32 && regs->int_no < 48) {

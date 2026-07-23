@@ -28,6 +28,11 @@ C_SOURCES = \
 	kernel/gdt.c \
 	kernel/idt.c \
 	kernel/timer.c \
+	kernel/process.c \
+	kernel/tss.c \
+	kernel/elf_loader.c \
+	kernel/initrd.c \
+	kernel/scheduler_process.c \
 	mm/pmm.c \
 	mm/vmm.c \
 	mm/heap.c \
@@ -50,16 +55,25 @@ C_SOURCES = \
 ASM_SOURCES = \
 	boot/boot.asm \
 	sched/switch.asm \
+	sched/tss_flush.asm \
 	sched/gdt_flush.asm \
 	sched/idt_stubs.asm \
 	sched/syscall_stub.asm
 
 C_OBJECTS = $(C_SOURCES:.c=.o)
 ASM_OBJECTS = $(ASM_SOURCES:.asm=.o)
+INITRD_OBJECTS = initrd_init.o initrd_shell.o
 
-all: $(C_OBJECTS) $(ASM_OBJECTS)
-	$(LD) $(LDFLAGS) -o dionnex.bin $(ASM_OBJECTS) $(C_OBJECTS)
-	@echo "=== Dionnex Monolithic Kernel built successfully ==="
+all: user initrd $(C_OBJECTS) $(ASM_OBJECTS)
+	$(LD) $(LDFLAGS) -o dionnex.bin $(ASM_OBJECTS) $(C_OBJECTS) $(INITRD_OBJECTS)
+	@echo "=== Dionnex Monolithic Kernel built successfully with Ring 3 Userspace ==="
+
+user:
+	$(MAKE) -C user
+
+initrd: user
+	objcopy -I binary -O elf32-i386 -B i386 user/init.elf initrd_init.o --rename-section .data=.rodata,alloc,load,readonly,data,contents
+	objcopy -I binary -O elf32-i386 -B i386 user/shell_user.elf initrd_shell.o --rename-section .data=.rodata,alloc,load,readonly,data,contents
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -77,6 +91,7 @@ run: all
 	qemu-system-i386 -kernel dionnex.bin -serial stdio -m 256M
 
 clean:
-	rm -rf $(C_OBJECTS) $(ASM_OBJECTS) dionnex.bin dionnex.iso iso/boot/dionnex.bin
+	$(MAKE) -C user clean
+	rm -rf $(C_OBJECTS) $(ASM_OBJECTS) $(INITRD_OBJECTS) dionnex.bin dionnex.iso iso/boot/dionnex.bin
 
-.PHONY: all iso run clean
+.PHONY: all user initrd iso run clean

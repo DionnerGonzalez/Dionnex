@@ -25,6 +25,9 @@
 #include <fs/ramfs.h>
 #include <string.h>
 
+#include <kernel/process.h>
+#include <kernel/initrd.h>
+
 static char cmd_buf[256];
 static uint32_t cmd_pos = 0;
 
@@ -101,7 +104,10 @@ static void shell_exec(char *buf) {
         printk("  memstat         - Show physical memory and heap diagnostics\n");
         printk("  backtrace       - Print stack backtrace frame pointers\n");
         printk("  hexdump <a,l>   - Hexdump memory address <hex_addr> <len>\n");
-        printk("  ps              - List active scheduler processes\n");
+        printk("  ps / procs      - List kernel tasks and Ring 3 user processes\n");
+        printk("  kill <pid>      - Terminate user process by PID\n");
+        printk("  exec <elf>      - Load and execute user ELF binary\n");
+        printk("  initrd          - List embedded InitRD user binaries\n");
         printk("  ls <path>       - List VFS directory contents\n");
         printk("  cat <file>      - Display file content from VFS\n");
         printk("  echo <msg>      - Print message or write to file (> file)\n");
@@ -141,8 +147,45 @@ static void shell_exec(char *buf) {
         } else {
             printk("Usage: hexdump <hex_address> [length]\n");
         }
-    } else if (strcmp(cmd, "ps") == 0) {
+    } else if (strcmp(cmd, "ps") == 0 || strcmp(cmd, "procs") == 0) {
+        printk("--- Kernel Tasks ---\n");
         scheduler_list();
+        printk("\n--- Ring 3 Userspace Processes ---\n");
+        process_list();
+    } else if (strcmp(cmd, "kill") == 0) {
+        if (arg1) {
+            uint32_t target_pid = (uint32_t)atoi(arg1);
+            process_t *p = process_get_by_pid(target_pid);
+            if (p) {
+                p->state = PROC_ZOMBIE;
+                p->exit_code = 137;
+                printk("Process PID %u terminated (SIGKILL)\n", target_pid);
+            } else {
+                printk("Process PID %u not found\n", target_pid);
+            }
+        } else {
+            printk("Usage: kill <pid>\n");
+        }
+    } else if (strcmp(cmd, "exec") == 0) {
+        if (arg1) {
+            uint32_t size = 0;
+            uint8_t *data = initrd_get_file(arg1, &size);
+            if (data) {
+                process_t *p = process_create(arg1, data, size);
+                if (p) {
+                    sched_proc_add(p);
+                    printk("Started user process '%s' (PID %u)\n", arg1, p->pid);
+                } else {
+                    printk("Failed to create user process for '%s'\n", arg1);
+                }
+            } else {
+                printk("Binary '%s' not found in InitRD\n", arg1);
+            }
+        } else {
+            printk("Usage: exec <elf_name>\n");
+        }
+    } else if (strcmp(cmd, "initrd") == 0) {
+        initrd_list();
     } else if (strcmp(cmd, "ls") == 0) {
         vfs_list(arg1 ? arg1 : "/ram");
     } else if (strcmp(cmd, "cat") == 0) {

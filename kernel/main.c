@@ -36,6 +36,10 @@
 #include <fs/vfs.h>
 #include <fs/ramfs.h>
 #include <fs/procfs.h>
+#include <kernel/tss.h>
+#include <kernel/process.h>
+#include <kernel/scheduler_process.h>
+#include <kernel/initrd.h>
 #include <string.h>
 
 void kernel_main(uint32_t magic, uint32_t mbi_addr) {
@@ -116,13 +120,40 @@ void kernel_main(uint32_t magic, uint32_t mbi_addr) {
     // 24. System Calls (INT 0x80)
     syscall_init();
 
+    // 25. Userspace Subsystems (Ring 3)
+    tss_init();
+    process_init();
+    sched_proc_init();
+    initrd_init();
+
     // Additional hardware & subsystem setup
     elf_init();
     smp_init();
     vesa_init(mb_info);
     module_init_subsystem();
 
-    // 25. Log completion
+    // Spawn Userspace Initial Processes
+    uint32_t init_sz = 0;
+    uint8_t *init_data = initrd_get_file("init.elf", &init_sz);
+    if (init_data && init_sz > 0) {
+        process_t *init_proc = process_create("init", init_data, init_sz);
+        if (init_proc) {
+            sched_proc_add(init_proc);
+            pr_info("Init: Started init process (pid %u)\n", init_proc->pid);
+        }
+    }
+
+    uint32_t sh_sz = 0;
+    uint8_t *sh_data = initrd_get_file("shell_user.elf", &sh_sz);
+    if (sh_data && sh_sz > 0) {
+        process_t *sh_proc = process_create("shell_user", sh_data, sh_sz);
+        if (sh_proc) {
+            sched_proc_add(sh_proc);
+            pr_info("Init: Started user shell process (pid %u)\n", sh_proc->pid);
+        }
+    }
+
+    // 26. Log completion
     pr_info("All subsystems initialized\n");
 
     // 26. Init commands

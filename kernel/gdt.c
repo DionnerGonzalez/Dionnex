@@ -5,10 +5,10 @@
 #include <kernel/gdt.h>
 #include <kernel/printk.h>
 
-static gdt_entry_t gdt_entries[5];
+static gdt_entry_t gdt_entries[6];
 static gdt_ptr_t gdt_ptr;
 
-static void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran) {
+void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran) {
     gdt_entries[num].base_low    = (base & 0xFFFF);
     gdt_entries[num].base_mid    = (base >> 16) & 0xFF;
     gdt_entries[num].base_high   = (base >> 24) & 0xFF;
@@ -21,7 +21,7 @@ static void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t acc
 }
 
 void gdt_init(void) {
-    gdt_ptr.limit = (sizeof(gdt_entry_t) * 5) - 1;
+    gdt_ptr.limit = (sizeof(gdt_entry_t) * 6) - 1;
     gdt_ptr.base  = (uint32_t)&gdt_entries;
 
     gdt_set_gate(0, 0, 0, 0, 0);                 // Null descriptor
@@ -29,7 +29,8 @@ void gdt_init(void) {
     gdt_set_gate(2, 0, 0xFFFFFFFF, 0x92, 0xCF); // Kernel Data segment
     gdt_set_gate(3, 0, 0xFFFFFFFF, 0xFA, 0xCF); // User Code segment
     gdt_set_gate(4, 0, 0xFFFFFFFF, 0xF2, 0xCF); // User Data segment
+    gdt_set_gate(5, 0, 0, 0, 0);                 // TSS segment placeholder
 
     gdt_flush((uint32_t)&gdt_ptr);
-    printk("GDT: Loaded 5 GDT descriptors\n");
+    printk("GDT: Loaded 6 GDT descriptors\n");
 }
