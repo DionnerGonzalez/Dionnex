@@ -1,6 +1,6 @@
 # Dionnex Ring 3 Userspace Programs Makefile
 CC = gcc
-CFLAGS = -m32 -ffreestanding -nostdlib -nostdinc -fno-builtin -fno-stack-protector -I../include
+CFLAGS = -m32 -ffreestanding -nostdlib -nostdinc -fno-builtin -fno-stack-protector -fno-pic -fno-pie -I../include
 LD = ld
 LDFLAGS = -m elf_i386 -T init.ld -nostdlib
 

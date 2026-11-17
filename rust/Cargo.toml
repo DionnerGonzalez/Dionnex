@@ -1,0 +1,16 @@
+[package]
+name = "dionnex_rust"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-2.0-only"
+description = "Safe no_std kernel subsystems for the Dionnex monolithic kernel"
+
+[lib]
+name = "dionnex_rust"
+crate-type = ["staticlib"]
+
+[profile.release]
+opt-level = 2
+panic = "abort"
+lto = false
+codegen-units = 1

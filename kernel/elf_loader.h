@@ -7,10 +7,20 @@
 #define _DIONNEX_ELF_LOADER_H_
 
 #include <types.h>
+#include <mm/vmm.h>
 
-#define ELF_MAGIC 0x464C457F
+#define ELF_MAGIC 0x464C457FU
+#define EM_386    3
+#define ET_EXEC   2
+#define ET_DYN    3
 
-#define PT_LOAD 1
+#define PT_NULL    0
+#define PT_LOAD    1
+#define PT_DYNAMIC 2
+#define PT_INTERP  3
+#define PT_NOTE    4
+#define PT_SHLIB   5
+#define PT_PHDR    6
 
 #define PF_X 1
 #define PF_W 2
@@ -48,8 +58,8 @@ struct elf32_phdr {
 
 typedef struct elf32_phdr elf32_phdr_t;
 
-int elf_validate(uint8_t *data, uint32_t size);
-uint32_t elf_get_entry(uint8_t *data);
-int elf_load_segments(uint8_t *data, uint32_t size, uint32_t *page_dir);
+int elf_validate(const uint8_t *data, uint32_t size);
+uint32_t elf_get_entry(const uint8_t *data, uint32_t size);
+int elf_load_segments(const uint8_t *data, uint32_t size, page_directory_t *page_dir);
 
 #endif /* _DIONNEX_ELF_LOADER_H_ */

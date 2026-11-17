@@ -50,17 +50,17 @@ void isr_handler(registers_t *regs) {
 }
 
 void irq_handler(registers_t *regs) {
+    if (regs->int_no >= 32 && regs->int_no < 48) {
+        apic_eoi();
+        pic_send_eoi((uint8_t)(regs->int_no - 32));
+    }
+
     if (interrupt_handlers[regs->int_no]) {
         interrupt_handlers[regs->int_no](regs);
     }
 
     if (regs->int_no == 32) { // Timer IRQ0
         sched_proc_tick();
-    }
-
-    if (regs->int_no >= 32 && regs->int_no < 48) {
-        apic_eoi();
-        pic_send_eoi((uint8_t)(regs->int_no - 32));
     }
 }
 

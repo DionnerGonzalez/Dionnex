@@ -157,7 +157,7 @@ vfs_node_t *vfs_readdir(vfs_node_t *dir, uint32_t index) {
 }
 
 vfs_node_t *vfs_finddir(vfs_node_t *dir, const char *name) {
-    if (dir && dir->ops && dir->finddir) {
+    if (dir && dir->ops && dir->ops->finddir) {
         return dir->ops->finddir(dir, name);
     }
     return NULL;

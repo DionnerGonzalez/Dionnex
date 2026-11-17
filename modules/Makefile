@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -m32 -ffreestanding -nostdlib -nostdinc -fno-builtin -fno-stack-protector -fno-stack-check -Wall -Wextra -c
+CFLAGS = -m32 -ffreestanding -nostdlib -nostdinc -fno-builtin -fno-stack-protector -fno-stack-check -fno-pic -fno-pie -Wall -Wextra -c
 
 all: hello.ko counter.ko sysinfo_mod.ko
 

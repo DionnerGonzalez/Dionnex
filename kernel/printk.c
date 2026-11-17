@@ -1,5 +1,6 @@
 /* ============================================================================
  * Dionnex Monolithic Kernel - Kernel Formatted Output Implementation
+ * Author: Ihosvanni Dionner Gonzalez
  * ============================================================================
  */
 #include <kernel/printk.h>
@@ -48,10 +49,29 @@ static void printk_out_char(char c) {
     serial_putchar(c);
 }
 
-static void printk_out_str(const char *s) {
-    if (!s) return;
+static void printk_out_padded(const char *s, int width, int left_align, char pad_char) {
+    if (!s) s = "(null)";
+    int len = (int)strlen(s);
+    int pad = (width > len) ? (width - len) : 0;
+
+    if (!left_align) {
+        if (pad_char == '0' && s[0] == '-') {
+            printk_out_char('-');
+            s++;
+        }
+        for (int i = 0; i < pad; i++) {
+            printk_out_char(pad_char);
+        }
+    }
+
     while (*s) {
         printk_out_char(*s++);
+    }
+
+    if (left_align) {
+        for (int i = 0; i < pad; i++) {
+            printk_out_char(' ');
+        }
     }
 }
 
@@ -70,44 +90,69 @@ void printk(const char *fmt, ...) {
             continue;
         }
 
-        fmt++; // Skip '%'
+        fmt++; /* Skip '%' */
         if (!*fmt) break;
+
+        int left_align = 0;
+        char pad_char = ' ';
+        int width = 0;
+
+        while (*fmt == '-' || *fmt == '0') {
+            if (*fmt == '-') left_align = 1;
+            else if (*fmt == '0') pad_char = '0';
+            fmt++;
+        }
+        if (left_align) pad_char = ' ';
+
+        while (*fmt >= '0' && *fmt <= '9') {
+            width = (width * 10) + (*fmt - '0');
+            fmt++;
+        }
+
+        if (*fmt == 'l') fmt++;
 
         switch (*fmt) {
             case 's': {
                 const char *str = va_arg(args, const char *);
-                if (!str) str = "(null)";
-                printk_out_str(str);
+                printk_out_padded(str ? str : "(null)", width, left_align, ' ');
                 break;
             }
             case 'd':
             case 'i': {
                 int32_t val = va_arg(args, int32_t);
                 printk_itoa(val, buf, 10);
-                printk_out_str(buf);
+                printk_out_padded(buf, width, left_align, pad_char);
                 break;
             }
             case 'u': {
                 uint32_t val = va_arg(args, uint32_t);
                 printk_utoa(val, buf, 10, false);
-                printk_out_str(buf);
+                printk_out_padded(buf, width, left_align, pad_char);
                 break;
             }
             case 'x': {
                 uint32_t val = va_arg(args, uint32_t);
                 printk_utoa(val, buf, 16, false);
-                printk_out_str(buf);
+                printk_out_padded(buf, width, left_align, pad_char);
                 break;
             }
             case 'X': {
                 uint32_t val = va_arg(args, uint32_t);
                 printk_utoa(val, buf, 16, true);
-                printk_out_str(buf);
+                printk_out_padded(buf, width, left_align, pad_char);
+                break;
+            }
+            case 'p': {
+                uint32_t val = va_arg(args, uint32_t);
+                printk_out_padded("0x", 0, 0, ' ');
+                printk_utoa(val, buf, 16, false);
+                printk_out_padded(buf, 8, 0, '0');
                 break;
             }
             case 'c': {
                 char c = (char)va_arg(args, int);
-                printk_out_char(c);
+                char ch_buf[2] = { c, '\0' };
+                printk_out_padded(ch_buf, width, left_align, ' ');
                 break;
             }
             case '%': {

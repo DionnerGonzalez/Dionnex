@@ -49,9 +49,22 @@ void kernel_panic(const char *msg) {
 
 void kernel_assert(int condition, const char *file, int line, const char *expr) {
     if (!condition) {
-        char err_buf[256];
-        err_buf[0] = '\0';
         printk("Assertion failed: (%s) at %s:%d\n", expr ? expr : "false", file ? file : "unknown", line);
         kernel_panic("Kernel Assertion Failed");
+    }
+}
+
+void dionnex_rust_panic_hook(const uint8_t *msg, uint32_t len) {
+    (void)len;
+    kernel_panic(msg ? (const char*)msg : "Rust no_std panic");
+    while (1) {
+        asm volatile ("hlt");
+    }
+}
+
+void rust_eh_personality(void) {
+    kernel_panic("Rust EH unwind invoked in freestanding kernel");
+    while (1) {
+        asm volatile ("hlt");
     }
 }

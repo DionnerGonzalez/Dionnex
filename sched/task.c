@@ -49,13 +49,12 @@ task_t *task_create(const char *name, void (*entry)(void), uint32_t priority) {
     task->priority = priority;
     task->next = NULL;
 
-    /* Allocate 8KB kernel stack (2 contiguous pages) */
-    task->stack_base = (uint32_t*)pmm_alloc_page();
+    /* Allocate 8KB kernel stack (2 contiguous low pages) */
+    task->stack_base = (uint32_t*)pmm_alloc_low_pages(2);
     if (!task->stack_base) {
         pmm_free_page((uint32_t)task);
         return NULL;
     }
-    pmm_alloc_page(); // Alloc second page for 8KB
 
     uint32_t *stack_top = (uint32_t*)((uint32_t)task->stack_base + TASK_STACK_SIZE);
 

@@ -30,3 +30,15 @@ public/
 .vite/
 .cache/
 
+# Dionnex kernel build artifacts
+*.o
+*.ko
+*.elf
+*.a
+dionnex.bin
+dionnex.iso
+iso/boot/dionnex.bin
+rust/target/
+tests/test_host
+*.img
+

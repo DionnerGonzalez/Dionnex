@@ -7,6 +7,7 @@
 #include <kernel/process.h>
 #include <kernel/tss.h>
 #include <kernel/printk.h>
+#include <mm/vmm.h>
 
 static process_t *sched_queue = NULL;
 
@@ -17,9 +18,13 @@ void sched_proc_init(void) {
 
 void sched_proc_add(process_t *proc) {
     if (!proc) return;
+    process_t *curr = sched_queue;
+    while (curr) {
+        if (curr == proc) return;
+        curr = curr->sched_next;
+    }
     proc->state = PROC_READY;
-
-    proc->next = sched_queue;
+    proc->sched_next = sched_queue;
     sched_queue = proc;
 }
 
@@ -27,47 +32,25 @@ void sched_proc_remove(process_t *proc) {
     if (!proc || !sched_queue) return;
 
     if (sched_queue == proc) {
-        sched_queue = proc->next;
+        sched_queue = proc->sched_next;
+        proc->sched_next = NULL;
         return;
     }
 
     process_t *curr = sched_queue;
-    while (curr->next) {
-        if (curr->next == proc) {
-            curr->next = proc->next;
+    while (curr->sched_next) {
+        if (curr->sched_next == proc) {
+            curr->sched_next = proc->sched_next;
+            proc->sched_next = NULL;
             return;
         }
-        curr = curr->next;
+        curr = curr->sched_next;
     }
-}
-
-void enter_userspace(uint32_t eip, uint32_t esp) {
-    asm volatile(
-        "cli\n\t"
-        "mov $0x23, %%ax\n\t" // User Data Segment (0x20 | 3)
-        "mov %%ax, %%ds\n\t"
-        "mov %%ax, %%es\n\t"
-        "mov %%ax, %%fs\n\t"
-        "mov %%ax, %%gs\n\t"
-        "pushl $0x23\n\t"     // SS
-        "pushl %1\n\t"        // ESP
-        "pushfl\n\t"          // EFLAGS
-        "popl %%eax\n\t"
-        "orl $0x200, %%eax\n\t" // Enable interrupts (IF bit)
-        "pushl %%eax\n\t"
-        "pushl $0x1B\n\t"     // CS User Code Segment (0x18 | 3)
-        "pushl %0\n\t"        // EIP
-        "iret\n\t"
-        :
-        : "r"(eip), "r"(esp)
-        : "eax", "memory"
-    );
 }
 
 void schedule_process(void) {
     if (!sched_queue) return;
 
-    // Pick process in PROC_READY state with lowest vruntime
     process_t *best = NULL;
     process_t *curr = sched_queue;
 
@@ -77,7 +60,7 @@ void schedule_process(void) {
                 best = curr;
             }
         }
-        curr = curr->next;
+        curr = curr->sched_next;
     }
 
     if (!best) return;
@@ -88,20 +71,12 @@ void schedule_process(void) {
 
     current_process = best;
     current_process->state = PROC_RUNNING;
-
-    // Update TSS kernel stack for ring 3 -> ring 0 interrupts
     tss_set_kernel_stack(current_process->esp0);
-
-    // If process hasn't started yet, jump into ring 3
-    if (current_process->vruntime == 0) {
-        current_process->vruntime = 1;
-        enter_userspace(current_process->user_eip, current_process->user_esp);
-    }
+    vmm_switch_directory(current_process->page_directory);
 }
 
 void sched_proc_tick(void) {
     if (current_process && current_process->state == PROC_RUNNING) {
         current_process->vruntime += 10;
-        schedule_process();
     }
 }

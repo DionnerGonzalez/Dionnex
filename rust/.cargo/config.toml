@@ -1,0 +1,6 @@
+[target.i586-unknown-linux-gnu]
+rustflags = [
+  "-C", "relocation-model=static",
+  "-C", "panic=abort",
+  "-C", "no-redzone=y"
+]

@@ -1,0 +1,50 @@
+name: Dionnex Kernel CI
+
+on:
+  push:
+    branches: [ main, master, "dev/**" ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install OS toolchain and QEMU
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc-multilib \
+            nasm \
+            binutils \
+            grub-pc-bin \
+            grub-common \
+            xorriso \
+            mtools \
+            qemu-system-x86 \
+            python3
+
+      - name: Configure Rust targets
+        run: |
+          rustup target add i586-unknown-linux-gnu x86_64-unknown-linux-gnu
+
+      - name: Build Dionnex Kernel and GRUB ISO
+        run: |
+          make clean
+          make
+          make iso
+
+      - name: Run Rust unit tests
+        run: |
+          cargo test --manifest-path rust/Cargo.toml --target x86_64-unknown-linux-gnu
+
+      - name: Run Host C + Rust FFI unit tests
+        run: |
+          make test-host
+
+      - name: Run QEMU Headless Integration Suite (SMP, AHCI, NVMe, USB, FAT32, ISO)
+        run: |
+          python3 scripts/test_qemu.py

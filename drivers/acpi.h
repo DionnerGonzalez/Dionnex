@@ -1,5 +1,6 @@
 /* ============================================================================
- * Dionnex Monolithic Kernel - ACPI Power Management Driver Header
+ * Dionnex Monolithic Kernel - ACPI Power Management & Table Parser Header
+ * Author: Ihosvanni Dionner Gonzalez
  * ============================================================================
  */
 #ifndef _DIONNEX_ACPI_H_
@@ -8,7 +9,7 @@
 #include <types.h>
 
 struct rsdp_descriptor {
-    char signature[8]; // "RSD PTR "
+    char signature[8]; /* "RSD PTR " */
     uint8_t checksum;
     char oem_id[6];
     uint8_t revision;
@@ -57,9 +58,51 @@ struct fadt_descriptor {
 
 typedef struct fadt_descriptor fadt_descriptor_t;
 
+typedef struct acpi_gas {
+    uint8_t address_space_id;
+    uint8_t register_bit_width;
+    uint8_t register_bit_offset;
+    uint8_t reserved;
+    uint64_t address;
+} __attribute__((packed)) acpi_gas_t;
+
+typedef struct acpi_hpet_table {
+    acpi_header_t header;
+    uint8_t hardware_rev_id;
+    uint8_t comparator_count : 5;
+    uint8_t counter_size     : 1;
+    uint8_t reserved         : 1;
+    uint8_t legacy_replace   : 1;
+    uint16_t pci_vendor_id;
+    acpi_gas_t address;
+    uint8_t hpet_number;
+    uint16_t minimum_tick;
+    uint8_t page_protection;
+} __attribute__((packed)) acpi_hpet_table_t;
+
+typedef struct acpi_mcfg_alloc {
+    uint64_t base_address;
+    uint16_t pci_segment_group;
+    uint8_t  start_bus_number;
+    uint8_t  end_bus_number;
+    uint32_t reserved;
+} __attribute__((packed)) acpi_mcfg_alloc_t;
+
+typedef struct acpi_mcfg_table {
+    acpi_header_t header;
+    uint64_t reserved;
+} __attribute__((packed)) acpi_mcfg_table_t;
+
+typedef struct acpi_madt_header {
+    acpi_header_t header;
+    uint32_t local_apic_address;
+    uint32_t flags;
+} __attribute__((packed)) acpi_madt_header_t;
+
 void acpi_init(void);
 void acpi_shutdown(void);
 void acpi_reboot(void);
 int acpi_is_available(void);
+acpi_header_t *acpi_find_table(const char *signature);
 
 #endif /* _DIONNEX_ACPI_H_ */

@@ -5,69 +5,102 @@
  */
 #include <kernel/elf_loader.h>
 #include <kernel/printk.h>
+#include <dionnex_rust.h>
+#include <arch.h>
 #include <mm/pmm.h>
 #include <mm/vmm.h>
 #include <string.h>
 
-int elf_validate(uint8_t *data, uint32_t size) {
-    if (!data || size < sizeof(elf32_header_t)) return 0;
+int elf_validate(const uint8_t *data, uint32_t size) {
+    if (!dionnex_rust_validate_elf32(data, size)) return 0;
 
-    elf32_header_t *hdr = (elf32_header_t*)data;
-    uint32_t magic = *(uint32_t*)hdr->e_ident;
+    const elf32_header_t *hdr = (const elf32_header_t*)data;
 
-    if (magic != ELF_MAGIC) return 0;
-    if (hdr->e_ident[4] != 1) return 0; // Must be 32-bit ELF
-    if (hdr->e_ident[5] != 1) return 0; // Must be Little-Endian
-    if (hdr->e_type != 2 && hdr->e_type != 3) return 0; // ET_EXEC or ET_DYN
+    if (hdr->e_ident[0] != 0x7F || hdr->e_ident[1] != 'E' ||
+        hdr->e_ident[2] != 'L'  || hdr->e_ident[3] != 'F') {
+        return 0;
+    }
+    if (hdr->e_ident[4] != 1) return 0; /* ELFCLASS32 */
+    if (hdr->e_ident[5] != 1) return 0; /* ELFDATA2LSB */
+    if (hdr->e_type != ET_EXEC && hdr->e_type != ET_DYN) return 0;
+    if (hdr->e_machine != EM_386) return 0;
+    if (hdr->e_phnum == 0 || hdr->e_phentsize < sizeof(elf32_phdr_t)) return 0;
+
+    uint64_t ph_end = (uint64_t)hdr->e_phoff + ((uint64_t)hdr->e_phnum * hdr->e_phentsize);
+    if (ph_end > size || hdr->e_phoff > size) return 0;
+
+    if (hdr->e_entry < DIONNEX_USER_VADDR_MIN || hdr->e_entry >= DIONNEX_USER_VADDR_MAX) {
+        return 0;
+    }
 
     return 1;
 }
 
-uint32_t elf_get_entry(uint8_t *data) {
-    if (!elf_validate(data, sizeof(elf32_header_t))) return 0;
-    elf32_header_t *hdr = (elf32_header_t*)data;
+uint32_t elf_get_entry(const uint8_t *data, uint32_t size) {
+    if (!elf_validate(data, size)) return 0;
+    const elf32_header_t *hdr = (const elf32_header_t*)data;
     return hdr->e_entry;
 }
 
-int elf_load_segments(uint8_t *data, uint32_t size, uint32_t *page_dir) {
-    (void)page_dir; // Paging operates on current address space or active directory
-    if (!elf_validate(data, size)) return -1;
+int elf_load_segments(const uint8_t *data, uint32_t size, page_directory_t *page_dir) {
+    if (!elf_validate(data, size) || !page_dir) return -1;
 
-    elf32_header_t *hdr = (elf32_header_t*)data;
-    elf32_phdr_t *ph = (elf32_phdr_t*)(data + hdr->e_phoff);
+    const elf32_header_t *hdr = (const elf32_header_t*)data;
     uint32_t count = 0;
 
-    for (uint16_t i = 0; i < hdr->e_phnum; i++, ph++) {
+    for (uint16_t i = 0; i < hdr->e_phnum; i++) {
+        const elf32_phdr_t *ph = (const elf32_phdr_t*)(data + hdr->e_phoff + ((uint32_t)i * hdr->e_phentsize));
         if (ph->p_type != PT_LOAD) continue;
+        if (ph->p_memsz == 0) continue;
 
-        uint32_t vaddr = ph->p_vaddr;
-        uint32_t memsz = ph->p_memsz;
-        uint32_t filesz = ph->p_filesz;
-        uint32_t offset = ph->p_offset;
+        /* Security: validate segment bounds and ensure strict user-space placement */
+        if (ph->p_filesz > ph->p_memsz) return -1;
+        if ((uint64_t)ph->p_offset + ph->p_filesz > size) return -1;
+        if (ph->p_vaddr < DIONNEX_USER_VADDR_MIN) return -1;
+        uint64_t seg_end = (uint64_t)ph->p_vaddr + ph->p_memsz;
+        if (seg_end > DIONNEX_USER_VADDR_MAX || seg_end < ph->p_vaddr) return -1;
 
-        uint32_t page_start = vaddr & ~0xFFF;
-        uint32_t page_end = (vaddr + memsz + 0xFFF) & ~0xFFF;
+        uint32_t page_start = ph->p_vaddr & ~0xFFFU;
+        uint32_t page_end   = (uint32_t)ALIGN_UP(seg_end, PAGE_SIZE);
+        uint32_t flags      = VMM_PRESENT | VMM_USER;
+        if (ph->p_flags & PF_W) flags |= VMM_WRITABLE;
 
-        for (uint32_t page = page_start; page < page_end; page += 4096) {
-            void *phys = pmm_alloc_page();
-            if (!phys) {
-                printk("ELF: Memory allocation failed during segment load\n");
-                return -1;
+        for (uint32_t page = page_start; page < page_end; page += PAGE_SIZE) {
+            uint32_t phys = vmm_get_phys_in(page_dir, page) & ~0xFFFU;
+            if (phys == 0) {
+                phys = pmm_alloc_page();
+                if (!phys) {
+                    printk("ELF: Out of physical memory loading segment %u\n", i);
+                    return -1;
+                }
+                vmm_zero_phys_page(phys);
+                if (vmm_map_page_in(page_dir, page, phys, flags) != 0) {
+                    pmm_free_page(phys);
+                    return -1;
+                }
+            } else if (ph->p_flags & PF_W) {
+                vmm_map_page_in(page_dir, page, phys, flags);
             }
-            uint32_t flags = VMM_PRESENT | VMM_USER;
-            if (ph->p_flags & PF_W) flags |= VMM_WRITABLE;
-            vmm_map_page(page, (uint32_t)phys, flags);
-        }
 
-        // Copy segment content and clear remaining BSS memory
-        memset((void*)vaddr, 0, memsz);
-        if (filesz > 0 && (offset + filesz <= size)) {
-            memcpy((void*)vaddr, data + offset, filesz);
+            /* Copy intersection of [page, page + PAGE_SIZE) with [p_vaddr, p_vaddr + p_filesz) */
+            uint32_t file_vstart = ph->p_vaddr;
+            uint32_t file_vend   = ph->p_vaddr + ph->p_filesz;
+            uint32_t copy_start  = MAX(page, file_vstart);
+            uint32_t copy_end    = MIN(page + PAGE_SIZE, file_vend);
+
+            if (copy_end > copy_start) {
+                uint32_t page_off = copy_start - page;
+                uint32_t file_off = ph->p_offset + (copy_start - file_vstart);
+                uint32_t len      = copy_end - copy_start;
+                vmm_write_phys_page(phys, page_off, data + file_off, len);
+            }
         }
 
         count++;
     }
 
-    printk("ELF: Loaded %u PT_LOAD segments, entry point at 0x%x\n", count, hdr->e_entry);
+    if (count == 0) return -1;
+    printk("ELF: Loaded %u PT_LOAD segments into isolated address space (entry 0x%x)\n",
+           count, hdr->e_entry);
     return 0;
 }

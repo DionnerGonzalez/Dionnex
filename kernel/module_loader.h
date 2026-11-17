@@ -10,6 +10,7 @@
 #include <types.h>
 
 #define ET_REL 1
+#define EM_386 3
 
 #define SHT_PROGBITS 1
 #define SHT_SYMTAB   2
@@ -19,10 +20,13 @@
 #define SHT_REL      9
 
 #define SHN_UNDEF    0
+#define SHN_ABS      0xFFF1U
+#define SHN_COMMON   0xFFF2U
 
 #define ELF32_R_SYM(i)  ((i) >> 8)
 #define ELF32_R_TYPE(i) ((uint8_t)(i))
 
+#define R_386_NONE 0
 #define R_386_32   1
 #define R_386_PC32 2
 #define R_386_16   4
@@ -45,7 +49,7 @@ typedef struct {
     uint16_t e_shentsize;
     uint16_t e_shnum;
     uint16_t e_shstrndx;
-} elf32_ehdr;
+} __attribute__((packed)) elf32_ehdr;
 
 typedef struct {
     uint32_t sh_name;
@@ -58,7 +62,7 @@ typedef struct {
     uint32_t sh_info;
     uint32_t sh_addralign;
     uint32_t sh_entsize;
-} elf32_shdr;
+} __attribute__((packed)) elf32_shdr;
 
 typedef struct {
     uint32_t st_name;
@@ -67,28 +71,35 @@ typedef struct {
     uint8_t  st_info;
     uint8_t  st_other;
     uint16_t st_shndx;
-} elf32_sym;
+} __attribute__((packed)) elf32_sym;
 
 typedef struct {
     uint32_t r_offset;
     uint32_t r_info;
-} elf32_rel;
+} __attribute__((packed)) elf32_rel;
 
 struct kernel_module_struct {
     char name[64];
-    uint32_t version;
+    char version[32];
+    char author[64];
+    char description[128];
+    char license[32];
+    char depends[64];
+    uint32_t refcount;
     uint8_t loaded;
     uint32_t base_addr;
     uint32_t total_size;
-    void (*init_func)(void);
+    int (*init_func)(void);
     void (*cleanup_func)(void);
     struct kernel_module_struct *next;
 };
 
 typedef struct kernel_module_struct kernel_module_t;
 
-int module_load_binary(const char *name, uint8_t *data, uint32_t size);
+int module_load_binary(const char *name, const uint8_t *data, uint32_t size);
 int module_unload_binary(const char *name);
+kernel_module_t *module_find_loaded(const char *name);
+void module_print_info(const char *name);
 void module_list_loaded(void);
 uint32_t module_get_loaded_count(void);
 int module_get_proc_info(char *buf, uint32_t max_len);

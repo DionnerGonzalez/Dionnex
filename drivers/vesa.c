@@ -5,6 +5,7 @@
 #include <drivers/vesa.h>
 #include <kernel/printk.h>
 #include <kernel/multiboot.h>
+#include <mm/pmm.h>
 #include <mm/vmm.h>
 #include <mm/heap.h>
 #include <string.h>
@@ -71,25 +72,23 @@ void vesa_init(void *mb_info_ptr) {
 
     // Check if VBE mode info is present (bit 11)
     if ((mb->flags & (1 << 11)) && mb->vbe_mode_info != 0) {
-        vesa_mode_info_t *mode_info = (vesa_mode_info_t*)mb->vbe_mode_info;
+        vesa_mode_info_t *mode_info = (vesa_mode_info_t*)(uintptr_t)mb->vbe_mode_info;
         vesa_width  = mode_info->width;
         vesa_height = mode_info->height;
         vesa_bpp    = mode_info->bpp;
         vesa_pitch  = mode_info->bytes_per_scanline;
-        vesa_framebuffer = (uint8_t*)mode_info->physbase;
 
-        // Map framebuffer pages
         uint32_t fb_size = vesa_pitch * vesa_height;
-        uint32_t fb_pages = (fb_size + PAGE_SIZE - 1) / PAGE_SIZE;
-        for (uint32_t i = 0; i < fb_pages; i++) {
-            vmm_map_page((uint32_t)vesa_framebuffer + (i * PAGE_SIZE),
-                         (uint32_t)vesa_framebuffer + (i * PAGE_SIZE),
-                         VMM_PRESENT | VMM_WRITABLE);
+        vesa_framebuffer = (uint8_t*)vmm_ioremap(mode_info->physbase, fb_size);
+        if (vesa_framebuffer) {
+            vesa_enabled = 1;
+            printk("VESA: %ux%u %ubpp framebuffer phys 0x%x (virt %p)\n",
+                   vesa_width, vesa_height, vesa_bpp, mode_info->physbase,
+                   (uint32_t)(uintptr_t)vesa_framebuffer);
+        } else {
+            vesa_enabled = 0;
+            printk("VESA: Failed to ioremap LFB at 0x%x\n", mode_info->physbase);
         }
-
-        vesa_enabled = 1;
-        printk("VESA: %ux%u %ubpp framebuffer at 0x%x\n",
-               vesa_width, vesa_height, vesa_bpp, (uint32_t)vesa_framebuffer);
     } else {
         // Fallback: Allocate software canvas buffer
         uint32_t size = vesa_width * vesa_height * 4;

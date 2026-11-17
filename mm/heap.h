@@ -12,18 +12,22 @@
 struct heap_block {
     uint32_t magic;
     uint32_t size;
-    uint8_t free;
+    uint8_t  free;
+    uint8_t  reserved[3];
     struct heap_block *next;
+    struct heap_block *prev;
 } __attribute__((packed));
 
 typedef struct heap_block heap_block_t;
 
 void heap_init(uint32_t start, uint32_t size);
 void *kmalloc(uint32_t size);
+void *kmalloc_aligned(uint32_t size, uint32_t align);
 void kfree(void *ptr);
 void *krealloc(void *ptr, uint32_t new_size);
 void *kcalloc(uint32_t count, uint32_t size);
 uint32_t heap_get_free(void);
 uint32_t heap_get_used(void);
+int heap_validate(void);
 
 #endif /* _DIONNEX_HEAP_H_ */

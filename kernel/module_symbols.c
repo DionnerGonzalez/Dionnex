@@ -17,10 +17,16 @@
 #include <drivers/serial.h>
 #include <drivers/pci.h>
 #include <drivers/apic.h>
+#include <drivers/hpet.h>
+#include <drivers/ahci.h>
+#include <drivers/nvme.h>
+#include <drivers/usb/usb.h>
 #include <mm/pmm.h>
 #include <mm/vmm.h>
 #include <mm/heap.h>
+#include <mm/dma.h>
 #include <fs/vfs.h>
+#include <dionnex_rust.h>
 #include <string.h>
 
 #define EXPORT_SYM(fn) { #fn, (uint32_t)&fn }
@@ -43,6 +49,8 @@ const kernel_symbol_t kernel_symbols[] = {
     EXPORT_SYM(vmm_map_page),
     EXPORT_SYM(vmm_unmap_page),
     EXPORT_SYM(vmm_get_phys),
+    EXPORT_SYM(dma_alloc_coherent),
+    EXPORT_SYM(dma_free_coherent),
 
     // String
     EXPORT_SYM(memset),
@@ -106,6 +114,13 @@ const kernel_symbol_t kernel_symbols[] = {
     EXPORT_SYM(module_load_binary),
     EXPORT_SYM(module_unload_binary),
     EXPORT_SYM(module_list_loaded),
+
+    // Storage, USB, HPET & Rust
+    EXPORT_SYM(hpet_read_counter),
+    EXPORT_SYM(ahci_is_present),
+    EXPORT_SYM(nvme_is_present),
+    EXPORT_SYM(usb_get_controller_count),
+    EXPORT_SYM(dionnex_rust_crc32),
 
     // Panic
     EXPORT_SYM(kernel_panic)

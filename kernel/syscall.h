@@ -25,6 +25,7 @@
 #define SYS_KILL          22
 #define SYS_MMAP          23
 #define SYS_MUNMAP        24
+#define SYS_PIPE          42
 #define SYS_IOCTL         54
 #define SYS_GETTIMEOFDAY  78
 #define SYS_UNAME         122
@@ -33,15 +34,6 @@
 #define SYS_DELETE_MODULE 176
 #define SYS_QUERY_MODULE  177
 #define SYS_EXIT_GROUP    252
-
-// Internal aliases for existing functions
-#define SYS_YIELD         5
-#define SYS_UPTIME        6
-#define SYS_MEMINFO       7
-#define SYS_FREAD         10
-#define SYS_FWRITE        11
-#define SYS_SLEEP         14
-#define SYS_REBOOT        15
 
 void syscall_init(void);
 void syscall_handler(registers_t *regs);

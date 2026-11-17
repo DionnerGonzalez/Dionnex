@@ -12,9 +12,16 @@
 #include <kernel/module.h>
 #include <kernel/smp.h>
 #include <drivers/vga.h>
+#include <drivers/serial.h>
 #include <drivers/keyboard.h>
+#include <drivers/mouse.h>
 #include <drivers/pci.h>
+#include <drivers/pcie.h>
+#include <drivers/hpet.h>
 #include <drivers/ata.h>
+#include <drivers/ahci.h>
+#include <drivers/nvme.h>
+#include <drivers/usb/usb.h>
 #include <drivers/rtc.h>
 #include <drivers/acpi.h>
 #include <drivers/vesa.h>
@@ -23,11 +30,15 @@
 #include <sched/scheduler.h>
 #include <fs/vfs.h>
 #include <fs/ramfs.h>
+#include <fs/fat32.h>
 #include <string.h>
 
 #include <kernel/process.h>
+#include <kernel/scheduler_process.h>
 #include <kernel/initrd.h>
 #include <kernel/module_loader.h>
+#include <kernel/selftest.h>
+#include <dionnex_rust.h>
 
 static char cmd_buf[256];
 static uint32_t cmd_pos = 0;
@@ -96,7 +107,15 @@ static void shell_exec(char *buf) {
         printk("  clear           - Clear VGA screen buffer\n");
         printk("  cpuid / cpuinfo - Display CPU vendor, model, and feature flags\n");
         printk("  pci             - List all PCI bus devices\n");
+        printk("  pcie            - List PCIe Express capabilities & ECAM link status\n");
         printk("  disk            - List ATA hard disk drives\n");
+        printk("  ahci            - List SATA AHCI controller ports\n");
+        printk("  nvme            - Show NVMe storage controller info\n");
+        printk("  usb             - List USB host controllers (UHCI/OHCI/EHCI/xHCI)\n");
+        printk("  hpet            - Show HPET high-precision timer status\n");
+        printk("  mouse           - Show PS/2 mouse coordinates and packet counter\n");
+        printk("  fatls           - List root directory of mounted FAT32 volume\n");
+        printk("  fatcat <file>   - Print file contents from mounted FAT32 volume\n");
         printk("  date            - Show Real Time Clock (RTC) date and time\n");
         printk("  dmesg / klog    - Dump ring buffer kernel logs\n");
         printk("  lsmod           - List active loaded kernel modules\n");
@@ -104,6 +123,8 @@ static void shell_exec(char *buf) {
         printk("  rmmod <name>    - Unload active kernel module\n");
         printk("  modinfo <name>  - Display kernel module metadata\n");
         printk("  smp             - List SMP CPU cores and topology\n");
+        printk("  rusttest        - Run Rust no_std subsystem verification\n");
+        printk("  selftest        - Run full in-kernel subsystem selftest suite\n");
         printk("  vesa            - Run VESA VBE graphics demo\n");
         printk("  memstat         - Show physical memory and heap diagnostics\n");
         printk("  backtrace       - Print stack backtrace frame pointers\n");
@@ -125,8 +146,50 @@ static void shell_exec(char *buf) {
         cpuid_print_info();
     } else if (strcmp(cmd, "pci") == 0) {
         pci_list();
+    } else if (strcmp(cmd, "pcie") == 0) {
+        pcie_list();
     } else if (strcmp(cmd, "disk") == 0) {
         ata_list_drives();
+    } else if (strcmp(cmd, "ahci") == 0) {
+        ahci_list_ports();
+    } else if (strcmp(cmd, "nvme") == 0) {
+        nvme_print_info();
+    } else if (strcmp(cmd, "usb") == 0) {
+        usb_list_controllers();
+    } else if (strcmp(cmd, "hpet") == 0) {
+        if (hpet_is_available()) {
+            uint64_t cnt = hpet_read_counter();
+            printk("HPET: Active | freq=%u Hz | counter=0x%x%08x\n",
+                   hpet_get_freq_hz(), (uint32_t)(cnt >> 32), (uint32_t)(cnt & 0xFFFFFFFFU));
+        } else {
+            printk("HPET: Not available\n");
+        }
+    } else if (strcmp(cmd, "mouse") == 0) {
+        mouse_state_t ms;
+        mouse_get_state(&ms);
+        printk("Mouse: X=%d Y=%d Buttons=0x%x Packets=%u\n",
+               ms.x, ms.y, ms.buttons, ms.packets);
+    } else if (strcmp(cmd, "fatls") == 0) {
+        fat32_list_root();
+    } else if (strcmp(cmd, "fatcat") == 0) {
+        if (arg1) {
+            uint8_t *fbuf = (uint8_t*)kmalloc(4096U);
+            uint32_t fsz = 0;
+            if (fbuf) {
+                int rd = fat32_read_file(arg1, fbuf, 4095U, &fsz);
+                if (rd >= 0) {
+                    fbuf[rd] = '\0';
+                    printk("%s\n", (char*)fbuf);
+                } else {
+                    printk("fatcat: cannot read '%s'\n", arg1);
+                }
+                kfree(fbuf);
+            }
+        } else {
+            printk("Usage: fatcat <filename>\n");
+        }
+    } else if (strcmp(cmd, "selftest") == 0) {
+        kernel_run_selftests();
     } else if (strcmp(cmd, "date") == 0) {
         rtc_time_t t = rtc_read_time();
         printk("RTC Time: %04u-%02u-%02u %02u:%02u:%02u (Unix: %u)\n",
@@ -154,8 +217,8 @@ static void shell_exec(char *buf) {
                     strcat(path_buf, arg1);
                 }
                 vfs_node_t *node = vfs_open(path_buf);
-                if (node && node->length > 0) {
-                    size = node->length;
+                if (node && node->size > 0) {
+                    size = node->size;
                     data = (uint8_t*)kmalloc(size);
                     if (data) {
                         int r = vfs_read(node, 0, size, data);
@@ -225,13 +288,18 @@ static void shell_exec(char *buf) {
             char *dot = strstr(mod_name, ".ko");
             if (dot) *dot = '\0';
 
-            printk("Module Information: %s\n", mod_name);
-            module_list_loaded();
+            module_print_info(mod_name);
         } else {
             printk("Usage: modinfo <name>\n");
         }
     } else if (strcmp(cmd, "smp") == 0) {
         smp_list_cpus();
+    } else if (strcmp(cmd, "rusttest") == 0) {
+        int32_t rc = dionnex_rust_selftest();
+        uint32_t crc = dionnex_rust_crc32((const uint8_t*)"123456789", 9);
+        printk("Rust Runtime: %s\n", dionnex_rust_version());
+        printk("Rust Selftest: %s (rc=%d, CRC32='123456789' -> 0x%08x)\n",
+               rc == 0 ? "PASS" : "FAIL", rc, crc);
     } else if (strcmp(cmd, "vesa") == 0) {
         vesa_test_demo();
     } else if (strcmp(cmd, "memstat") == 0) {
@@ -360,29 +428,45 @@ static void shell_exec(char *buf) {
     }
 }
 
+static char shell_getchar_blocking(void) {
+    for (;;) {
+        if (keyboard_has_input()) {
+            return keyboard_read();
+        }
+        if (serial_has_input()) {
+            char sc = serial_getchar();
+            if (sc == '\r') sc = '\n';
+            return sc;
+        }
+        asm volatile("hlt");
+    }
+}
+
 void shell_run(void) {
     shell_init();
     shell_prompt();
     cmd_pos = 0;
 
     for (;;) {
-        char c = keyboard_read();
+        char c = shell_getchar_blocking();
 
         if (c == '\n') {
-            vga_putchar('\n');
+            printk("\n");
             cmd_buf[cmd_pos] = '\0';
             shell_exec(cmd_buf);
             cmd_pos = 0;
             shell_prompt();
-        } else if (c == '\b') {
+        } else if (c == '\b' || c == 0x7F) {
             if (cmd_pos > 0) {
                 cmd_pos--;
                 vga_putchar('\b');
+                serial_write("\b \b");
             }
         } else if (c >= 32 && c < 127) {
             if (cmd_pos < 255) {
                 cmd_buf[cmd_pos++] = c;
                 vga_putchar(c);
+                serial_putchar(c);
             }
         }
     }
